@@ -1,3 +1,15 @@
 .bg-black {
     background-color: #000000 !important;
 }
+.text-shadow-sm{
+    text-shadow: 0 .125rem .25rem rgba(0,0,0,1)!important;
+    color: rgba(255,0,0,1);
+}
+.img-logo {
+    min-height: 24px;
+    vertical-align: middle;
+    border-style: none;
+}
+.text-bmu{
+    color: rgb(213,157,58)!important;
+}
