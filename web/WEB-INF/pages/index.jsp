@@ -6,5 +6,7 @@
     </head>
     <body>
 dfsdfsdf
+
+    <h1>quiero tirarme el index</h1>
     </body>
 </html>
