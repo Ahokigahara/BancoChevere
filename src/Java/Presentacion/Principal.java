@@ -34,8 +34,8 @@ public class Principal extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8"); 
         
         HttpSession session = request.getSession();
-        session.setAttribute("WEBSITE-TITLE","CHUCHERIAS");
-        session.setAttribute("WEBSITE-DESCRIPTION","Venta de chucherias en el agachese");
+        session.setAttribute("WEBSITE-TITLE","BANCO MEGAN ULLOITA");
+        session.setAttribute("WEBSITE-DESCRIPTION","BAJO DE INTERESES");
 
         request.getRequestDispatcher("WEB-INF/pages/index.jsp").forward(request, response);        
     }
