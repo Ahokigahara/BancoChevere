@@ -12,8 +12,8 @@ import javax.servlet.http.HttpSession;
  *
  * @author Guillermo
  */
-@WebServlet(name = "Principal", urlPatterns = {"/index.jsp"})
-public class Principal extends HttpServlet {
+@WebServlet(name = "PrincipalUsuario", urlPatterns = {"/indexUser.jsp"})
+public class PrincipalUsuario extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -28,12 +28,7 @@ public class Principal extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8"); 
         
-        HttpSession session = request.getSession();
-        //aca construir obj usuario
-        session.setAttribute("WEBSITE-TITLE","BANCO MEGA");
-        session.setAttribute("WEBSITE-DESCRIPTION","BAJO DE INTERESES");
-
-        request.getRequestDispatcher("WEB-INF/pages/index.jsp").forward(request, response);        
+        request.getRequestDispatcher("WEB-INF/pages/indexUser.jsp").forward(request, response);        
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
