@@ -39,9 +39,9 @@
                                                 <div class="tab-pane fade" id="tabTransferencias" role="tabpanel" aria-labelledby="tab-transferencias">
                                                     <div class="card-body">
                                                         <form>
-                                                            <div class="form-group row">
+                                                            <div class="form-group row justify-content-between">
                                                                 <label for="realizarTransferencia" class="col-sm-2 col-form-label">Realizar Transferencia</label>
-                                                                <div class="col-sm-10 ">
+                                                                <div class="col-sm-2 ">
                                                                     <button type="submit" class="btn btn-warning btn">Ver transferencias</button>
                                                                 </div>
                                                             </div>
@@ -72,11 +72,13 @@
                                                             <div class="form-group row">
                                                                 <label for="valorTransferir" class="col-sm-2 col-form-label">Valor a Transferir</label>
                                                                 <div class="col-sm-10">
-                                                                  <input type="" class="form-control" id="inputValorTransferir" placeholder="Ingrese el valor a transferir">  
+                                                                    <input type="" class="form-control" id="inputValorTransferir" placeholder="Ingrese el valor a transferir">  
                                                                 </div>
                                                             </div>
-                                                            <div class="form-group row ">
-                                                                  <button type="submit" class="btn btn-warning btn">Realizar transferencia</button>  
+                                                            <div class="form-group row justify-content-center">
+
+                                                                <button type="submit" class="btn btn-warning btn">Realizar transferencia</button>
+
                                                             </div>
                                                         </form>
                                                     </div>
@@ -84,6 +86,44 @@
 
                                                 <div class="tab-pane fade" id="tabPagos" role="tabpanel" aria-labelledby="tab-pagos">
                                                     <div class="card-body">
+                                                        <div class="form-group row justify-content-between">
+                                                            <label for="misPagos" class="col-sm-2 col-form-label">Mis Pagos</label>
+                                                            <div class="col-sm-2 ">
+                                                                <button type="submit" class="btn btn-warning btn">Realizar Pago</button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <table class="table table-striped">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th scope="col">Fecha de Pago</th>
+                                                                        <th scope="col">Nombre Servicio - Referencia</th>
+                                                                        <th scope="col">Canal</th>
+                                                                        <th scope="col">Valor</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <th scope="row">1</th>
+                                                                        <td>Mark</td>
+                                                                        <td>Otto</td>
+                                                                        <td>@mdo</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th scope="row">2</th>
+                                                                        <td>Jacob</td>
+                                                                        <td>Thornton</td>
+                                                                        <td>@fat</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th scope="row">3</th>
+                                                                        <td>Larry</td>
+                                                                        <td>the Bird</td>
+                                                                        <td>@twitter</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table> 
+                                                        </div>
 
                                                     </div>
                                                 </div>
