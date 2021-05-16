@@ -1,0 +1,1 @@
+<script src="<%= request.getContextPath() %>/resources/js/mainUsuario.js"></script>
