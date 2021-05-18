@@ -1,5 +1,6 @@
 package Presentacion;
 
+import Model.Usuario;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -26,9 +27,10 @@ public class PrincipalUsuario extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8"); 
-        
-        request.getRequestDispatcher("WEB-INF/pages/indexUser.jsp").forward(request, response);        
+        response.setContentType("text/html;charset=UTF-8");
+
+        request.getRequestDispatcher("WEB-INF/pages/indexUser.jsp").forward(request, response);
+
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

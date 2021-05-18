@@ -1,11 +1,3 @@
-function queryParamsPagos() {
-    var params = {};
-    $('#toolbarPagos').find('input[name]').each(function () {
-        params[$(this).attr('name')] = $(this).val();
-    })
-    return params;
-}
-
 function rowStyle(row, index) {
     return {
         css: {
@@ -13,6 +5,11 @@ function rowStyle(row, index) {
         }
     }
 }
+
+function currencyFormatter(value, row, index) {
+	return formatCurrency(value);
+}
+
 function formatCurrency(num) {
     num = num.toString().replace(/\$|\,/g, '');
     if (isNaN(num))
@@ -66,8 +63,7 @@ $.fn.producto = function (toOpciones) {
                     loSelect.val(lcValor);
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log();
-                    alert("Se presentó un error al cargar el producto \n" + jqXHR.responseText);
+                    $.confirm({title: "error", content: "Se presentó un error al cargar el producto \n" + jqXHR.responseText});
                 });
     });
     return this;
@@ -104,8 +100,7 @@ $.fn.entidad = function (toOpciones) {
                     loSelect.val(lcValor);
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log();
-                    alert("Se presentó un error al cargar el entidad \n" + jqXHR.responseText);
+                    $.confirm({title: "error", content: "Se presentó un error al cargar la entidad \n" + jqXHR.responseText});
                 });
     });
     return this;
@@ -123,7 +118,7 @@ $(function () {
                 {field: 'ORIGEN', title: 'Producto Origen', class: 'text-nowrap'},
                 {field: 'ENTIDAD', title: 'Entidad', class: 'text-nowrap'},
                 {field: 'REFERENCIA', title: 'Referencia', class: 'text-nowrap'},
-                {field: 'VALOR', title: 'Valor', class: 'text-nowrap'},
+                {field: 'VALOR', title: 'Valor', class: 'text-nowrap', formatter: currencyFormatter},
                 {field: 'CONCEPTO', title: 'Concepto', class: 'text-nowrap'}
             ]
         ]
@@ -139,7 +134,7 @@ $(function () {
                 {field: 'ORIGEN', title: 'Nombre Servicio - Referencia', class: 'text-nowrap'},
                 {field: 'DEESTINO', title: 'Destino', class: 'text-nowrap'},
                 {field: 'TITULARDESTINO', title: 'Titular Producto Destino', class: 'text-nowrap'},
-                {field: 'VALOR', title: 'Valor', class: 'text-nowrap'},
+                {field: 'VALOR', title: 'Valor', class: 'text-nowrap', formatter: currencyFormatter},
                 {field: 'CONCEPTO', title: 'Concepto', class: 'text-nowrap'}
             ]
         ]
@@ -152,8 +147,8 @@ $(function () {
             [
                 {field: 'NUMERO', title: 'Número de Producto', class: 'text-nowrap'},
                 {field: 'TIPO', title: 'Tipo de Producto', class: 'text-nowrap'},
-                {field: 'SALDO', title: 'Saldo', class: 'text-nowrap'},
-                {field: 'ESTADO', title: 'Estado', class: 'text-nowrap'}
+                {field: 'SALDO', title: 'Saldo', class: 'text-nowrap', formatter: currencyFormatter},
+                {field: 'TITULAR', title: 'Documento Titular', class: 'text-nowrap'}
             ]
         ]
     });
@@ -167,13 +162,12 @@ $(function () {
         }
     });
 
-    $('#referenciaPago').on("change", function () {
-        let loReferencia = $(this);
+    $('.mostrarValorPago').on("change", function () {
 
         $.ajax({
             type: "GET",
             url: "crudAjax.jsp",
-            data: {accion: 'consulta', tabla: 'referencias', entidad: $('#entidadPago').val(), referecnia: loReferencia.val()},
+            data: {accion: 'consulta', tabla: 'referencias', entidad: $('#entidadPago').val(), referencia: $('#referenciaPago').val()},
             dataType: "json"
         })
                 .done(function (response) {
@@ -185,8 +179,7 @@ $(function () {
                     }
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log();
-                    alert("Se presentó un error al cargar el producto \n" + jqXHR.responseText);
+                    $.confirm({title: "error", content: "Se presentó un error al cargar el producto \n" + jqXHR.responseText});
                 });
     });
     $('#productoDestinoTransferencia').on("change", function () {
@@ -208,8 +201,7 @@ $(function () {
                     }
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log();
-                    alert("Se presentó un error al cargar el producto destino \n" + jqXHR.responseText);
+                    $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
                 });
     });
 
@@ -236,7 +228,7 @@ $(function () {
                 .done(function (response) {
                     if (response != undefined) {
                         if (response.RESULTADO != undefined) {
-                            alert(response.MENSAJE);
+                            $.confirm({title: "Resultado", content: response.MENSAJE});
                             if (response.RESULTADO == true) {
                                 $(lcModal).modal('hide');
                                 $(lcTable).bootstrapTable('refresh');	
@@ -245,8 +237,7 @@ $(function () {
                     }
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log();
-                    alert("Se presentó un error al cargar el producto destino \n" + jqXHR.responseText);
+                    $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
                 });
     });
 });

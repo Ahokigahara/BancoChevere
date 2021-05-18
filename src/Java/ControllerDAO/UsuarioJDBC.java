@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ControllerDAO;
 
 import Model.*;
@@ -10,16 +5,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
 import Model.Usuario;
 import Service.Conexion;
 
-/**
- *
- * @author Guillermo
- */
 public class UsuarioJDBC {
    
     
@@ -36,20 +24,23 @@ public class UsuarioJDBC {
         return UsuarioJDBC;
     }
      
-    private final String SQL_SELECT_REC = "SELECT usuario, clave FROM usuarios WHERE usuario=?";
-    public Usuario consultarUsuario( String usuario, String mensaje){
+    private final String SQL_SELECT_ONE = "SELECT A.usuario, A.clave,   B.id, B.documento, B.documentoTipoId, B.documentoExpedicion, B.nombres, B.apellidos, B.direccion, B.telefono, B.email FROM usuarios as A LEFT JOIN terceros as B on A.terceroId = B.id WHERE A.usuario=?";
+    public Usuario consultarUsuario( String user, String mensaje){
         Connection conn=null;
         PreparedStatement stm=null;
         ResultSet rs=null;
-        Usuario usuarioAux = null;
+        Usuario usuario = null;
+        DocumentoTipo documentoTipo = new DocumentoTipo();
+        DocumentoTipoJDBC documentoTipoJDBC = new DocumentoTipoJDBC();
         mensaje = "Sin error";
         try{
             conn = Conexion.getConnection() ;
-            stm = conn.prepareStatement(SQL_SELECT_REC);
-            stm.setString(1, usuario);
+            stm = conn.prepareStatement(SQL_SELECT_ONE);
+            stm.setString(1, user);
             rs = stm.executeQuery();
             while(rs.next()){
-                usuarioAux = new Usuario(rs.getString(1), rs.getString(2));
+                documentoTipo = documentoTipoJDBC.consultarDocumentoTipo(rs.getString(5), mensaje);
+                usuario = new Usuario(rs.getString(1), rs.getString(2), rs.getInt(3), rs.getString(4), documentoTipo, rs.getString(6), rs.getString(7), rs.getString(8), rs.getString(9), rs.getString(10), rs.getString(11));
             }
         }catch(SQLException e){
             mensaje = "Error: "+e.getMessage();
@@ -58,7 +49,7 @@ public class UsuarioJDBC {
             Conexion.closed(stm);
             Conexion.closed(rs);
         }
-        return usuarioAux;
+        return usuario;
     }   
     
 }

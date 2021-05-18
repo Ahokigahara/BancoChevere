@@ -29,10 +29,10 @@ public class Principal extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8"); 
         
         HttpSession session = request.getSession();
-        //aca construir obj usuario
+
         session.setAttribute("WEBSITE-TITLE","BANCO MEGA");
         session.setAttribute("WEBSITE-DESCRIPTION","BAJO DE INTERESES");
-        session.setAttribute("USUARIO","");
+        session.setAttribute("USUARIO",null);
 
         request.getRequestDispatcher("WEB-INF/pages/index.jsp").forward(request, response);        
     }

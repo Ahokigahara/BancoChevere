@@ -1,37 +1,21 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Model;
 
-/**
- *
- * @author Guillermo
- */
-public class Usuario extends Persona  {
+public class Usuario extends Tercero  {
     private String usuario;
     private String clave;
 
     //Constructor
     public Usuario() {
-        super(0, "");
-        this.setUsuario("");
-        this.setClave("");       
+       super();
+       this.usuario = "";
+       this.clave = "";
     }
-    public Usuario(String usuario, String nombre, String clave) {
-        this.setUsuario(usuario);
-        this.setNombre(nombre);
-        this.setClave(clave);
+    public Usuario(String usuario, String clave, int id, String documento, DocumentoTipo documentoTipo, String documentoExpedicion, String nombres, String apellidos, String direccion, String telefono, String email) {
+        super(id, documento, documentoTipo, documentoExpedicion, nombres, apellidos, direccion, telefono, email);
+        this.usuario = usuario;
+        this.clave = clave;        
     }
-    public Usuario(String usuario, String clave) {
-        this.setUsuario(usuario);
-        this.setClave(clave);
-    }
-    public Usuario(String usuario, String clave, int id, String nombre) {
-        this.setUsuario(usuario);
-        this.setClave(clave);
-    }
+
 
     // Metdoos set
     public void setUsuario(String usuario) {
@@ -53,7 +37,7 @@ public class Usuario extends Persona  {
 
     @Override
     public String toString() {
-        return this.getId()+" "+this.getNombre()+""+this.getUsuario()+" "+this.getClave();
+        return "Usuario: "+this.getUsuario()+", clave: "+this.getClave()+", id: "+Integer.toString(this.getId())+", documento: "+this.getDocumento()+", documentoTipo: ["+this.getDocumentoTipo().toString()+"], documentoExpedicion: "+this.getDocumentoExpedicion()+", nombres: "+this.getNombres()+", apellidos: "+this.getApellidos()+", direccion: "+this.getDireccion()+", telefono: "+this.getTelefono() +", email: "+this.getEmail();
     }
     
 }

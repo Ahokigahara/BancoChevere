@@ -2,6 +2,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!-- MetaTags  -->
 <meta charset="UTF-8">
+<link rel="icon" href="<%= request.getContextPath()%>/resources/ico/favicon.ico">
 <!-- Bootstrap core CSS -->
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous"
       <!-- fonts -->
@@ -19,3 +20,6 @@
 <script type="text/javascript" src="<%= request.getContextPath()%>/resources/addons/bootstrap-table/3.1.3-dist/bootstrap-table.min.js"></script>
 <script type="text/javascript" src="<%= request.getContextPath()%>/resources/addons/bootstrap-table/3.1.3-dist/bootstrap-table-locale-all.min.js"></script>
 <script type="text/javascript" src="<%= request.getContextPath()%>/resources/addons/bootstrap-table/3.1.3-dist/extensions/export/bootstrap-table-export.min.js"></script>
+<!-- Bootstrap Confirm -->
+<link rel="stylesheet" href="<%= request.getContextPath()%>/resources/addons/jquery-confirm/3.3.4-dist/jquery-confirm.min.css" />
+<script type="text/javascript" src="<%= request.getContextPath()%>/resources/addons/jquery-confirm/3.3.4-dist/jquery-confirm.min.js"></script>

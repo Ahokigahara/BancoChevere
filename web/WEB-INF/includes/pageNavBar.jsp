@@ -1,11 +1,12 @@
+<%@page import="Model.Usuario"%>
 <%
-    String usuario = "";
+    Usuario usuario = null;
     try {
-        usuario = (String) session.getAttribute("USUARIO");
+        usuario = (Usuario) session.getAttribute("USUARIO");
     } catch (Exception excepcion) {
-        usuario = "";
+        usuario = null;
     }
-%>  
+%>
 <nav class="navbar navbar-expand-md navbar navbar-light bg-light fixed-top">
     <a class="navbar-brand" href="index.jsp"><img src="/BancoChevere/resources/images/background/desk_icono_bmu.svg" alt="" class="img-logo"><soan class="text-bmu pl-3"><%= session.getAttribute("WEBSITE-TITLE")%></span></a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" aria-expanded="false" aria-label="Toggle navigation">
@@ -15,14 +16,18 @@
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
+                <% if (usuario == null) { %>
                 <a class="nav-link" href="index.jsp">Inicio</a>
+                <% } else {%>
+                <a class="nav-link" href="indexUser.jsp">Inicio</a>
+                <% }%>                
             </li>
         </ul>
         <!-- Button trigger modal -->   
-        <% if (usuario.length() <= 0) { %>
+        <% if (usuario == null) { %>
         <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#loginModal">Ingresar</button>
         <% } else {%>
-        <a class="btn btn-warning" href="index.jsp?salir">Salir <%= usuario%></a>
+        <a class="btn btn-warning" href="index.jsp?salir">Cerrar sesión <b><%= usuario.getUsuario() %></b></a>
         <% }%>
     </div>
 </nav>
@@ -39,16 +44,16 @@
             </div>
             <div class="modal-body">
                 <form>
-                    <div class="form-group row">
-                        <label for="user" class="col-sm-2 col-form-label">Usuario</label>
-                        <div class="col-sm-10">
-                            <input type="" class="form-control" id="user" placeholder="Ingrese su Usuario">  
+                    <div class="form-row">
+                        <div class="form-group col-12">
+                            <label for="user">Usuario</label>
+                            <input type="" class="form-control" id="user" name="user">  
                         </div>
                     </div>
-                    <div class="form-group row">
-                        <label for="password" class="col-sm-2 col-form-label">Contraseña</label>
-                        <div class="col-sm-10">
-                            <input type="password" class="form-control" id="password" placeholder="Ingrese su Contraseña">  
+                    <div class="form-row">
+                        <div class="form-group col-12">
+                            <label for="password">Clave</label>
+                            <input type="password" class="form-control" id="password" name="password">  
                         </div>
                     </div>
                 </form>

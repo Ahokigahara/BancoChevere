@@ -1,10 +1,17 @@
 package Controller;
 
+import ControllerDAO.ProductoJDBC;
+import ControllerDAO.ReferenciaPagoJDBC;
+import ControllerDAO.TerceroJDBC;
 import ControllerDAO.UsuarioJDBC;
+import Model.Producto;
+import Model.ReferenciaPago;
+import Model.Tercero;
 import Model.Usuario;
 import static com.sun.corba.se.spi.presentation.rmi.StubAdapter.request;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -37,21 +44,23 @@ public class CrudAjax extends HttpServlet {
             String tabla = getParameterString(request, "tabla");
             String registros = "";
             Integer total = 0;
+            Usuario usuario = getSessionUsuario(request.getSession());
+            String mensaje = "";
 
             switch (accion) {
                 case "insercion":
-                    String origen ="";
+                    String origen = "";
                     String valor = "";
                     String concepto = "";
-                    
+
                     switch (tabla) {
                         case "transferencias":
                             origen = getParameterString(request, "productoOrigenTransferencia");
                             String destino = getParameterString(request, "productoDestinoTransferencia");
                             valor = getParameterString(request, "valorTransferencia");
-                            concepto= getParameterString(request, "conceptoTransferencia");
+                            concepto = getParameterString(request, "conceptoTransferencia");
 
-                            registros = "{\"RESULTADO\":true,\"MENSAJE\":\"Transferecnia de "+origen+" hasta "+destino+" realizada por valor "+valor+", concepto "+concepto+" \"}";
+                            registros = "{\"RESULTADO\":true,\"MENSAJE\":\"Transferecnia de " + origen + " hasta " + destino + " realizada por valor " + valor + ", concepto " + concepto + " \"}";
                             break;
 
                         case "pagos":
@@ -61,7 +70,7 @@ public class CrudAjax extends HttpServlet {
                             valor = "0";
                             concepto = "-";
 
-                            registros = "{\"RESULTADO\":true,\"MENSAJE\":\"Pago de "+origen+" a "+entidad+" referencia "+referencia+", valor "+valor+", concepto "+concepto+" \"}";
+                            registros = "{\"RESULTADO\":true,\"MENSAJE\":\"Pago de " + origen + " a " + entidad + " referencia " + referencia + ", valor " + valor + ", concepto " + concepto + " \"}";
                             break;
 
                     }
@@ -79,15 +88,33 @@ public class CrudAjax extends HttpServlet {
                             break;
 
                         case "referencias":
-                            String entidad = getParameterString(request, "entidad");
+                            Integer entidad = getParameterInteger(request, "entidad");
                             String referencia = getParameterString(request, "referencia");
-                            registros = "{\"VALOR\":1200,\"CONCEPTO\":\"Prueba\"}";
+                            Double valorReferencia = 0.0;
+                            String conceptoReferencia = "";
+                            mensaje = "";
+                            
+                            ReferenciaPagoJDBC referenciaPagoJDBC = new ReferenciaPagoJDBC();
+                            ReferenciaPago referenciaPago = referenciaPagoJDBC.consultarReferenciaPago(entidad, referencia, mensaje);
+                            
+                            if(referenciaPago!=null){
+                                valorReferencia = referenciaPago.getMonto();
+                                conceptoReferencia = "Referencia "+referenciaPago.getReferencia()+", "+referenciaPago.getTercero().getDocumento()+" - "+referenciaPago.getTercero().getNombres()+" "+referenciaPago.getTercero().getApellidos()+", "+String.valueOf(referenciaPago.getMonto());
+                            }
+                            
+                            registros = "{\"VALOR\":"+Double.toString(valorReferencia)+",\"CONCEPTO\":\""+conceptoReferencia+"\",\"MENSAJE\":\""+mensaje+"\"}";
                             break;
 
                         case "entidades":
                             registros = "";
-                            for (int row = 0; row < 15; row++) {
-                                registros += (registros.length() > 0 ? "," : "") + "{\"ID\":" + Integer.toString(row) + ",\"NOMBRE\":\"ENTIDAD " + Integer.toString(row) + "\"}";
+                            mensaje = "";
+                            if (usuario != null) {
+                                TerceroJDBC terceroJDBC = new TerceroJDBC();
+                                List<Tercero> terceros = terceroJDBC.consultarEntidades(mensaje);
+                                for (int row = 0; row < terceros.size(); row++) {
+                                    Tercero tercero = terceros.get(row);
+                                    registros += (registros.length() > 0 ? "," : "") + "{\"ID\":" + Integer.toString(tercero.getId()) + ",\"NOMBRE\":\""+tercero.getNombres()+" "+tercero.getApellidos()+ "\"}";
+                                }
                             }
                             registros = "[" + registros + "]";
                             break;
@@ -102,20 +129,34 @@ public class CrudAjax extends HttpServlet {
 
                         case "productos":
                             String alcance = getParameterString(request, "alcance");
+                            Producto producto = new Producto();
+
                             switch (alcance) {
 
                                 case "origen":
                                     registros = "";
-                                    for (int row = 0; row < 15; row++) {
-                                        registros += (registros.length() > 0 ? "," : "") + "{\"VALOR\":" + Integer.toString(row) + ", \"TEXTO\":\"" + alcance + " - " + Integer.toString(row) + "\"}";
+                                    mensaje = "";
+                                    if (usuario != null) {
+                                        ProductoJDBC productoJDBC = new ProductoJDBC();
+                                        List<Producto> productos = productoJDBC.consultarProductos(usuario.getId(), mensaje);
+                                        for (int row = 0; row < productos.size(); row++) {
+                                            producto = productos.get(row);
+                                            registros += (registros.length() > 0 ? "," : "") + "{\"VALOR\":" + Integer.toString(producto.getId()) + ",\"TEXTO\":\"" + Integer.toString(producto.getId()) + " - " + producto.getProductoTipo().getNombre() + " - " + producto.getTercero().getNombres() + " " + producto.getTercero().getApellidos() + "\"}";
+                                        }
                                     }
                                     registros = "[" + registros + "]";
                                     break;
 
                                 case "origen-tabla":
                                     registros = "";
-                                    for (int row = 0; row < 15; row++) {
-                                        registros += (registros.length() > 0 ? "," : "") + "{\"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\"x\",\"ORIGEN\":\"o\",\"CANAL\":\"l\",\"VALOR\":\"1\"}";
+                                    mensaje = "";
+                                    if (usuario != null) {
+                                        ProductoJDBC productoJDBC = new ProductoJDBC();
+                                        List<Producto> productos = productoJDBC.consultarProductos(usuario.getId(), mensaje);
+                                        for (int row = 0; row < productos.size(); row++) {
+                                            producto = productos.get(row);
+                                            registros += (registros.length() > 0 ? "," : "") + "{\"NUMERO\":" + Integer.toString(producto.getId()) + ",\"TIPO\":\"" + producto.getProductoTipo().getNombre() + "\",\"SALDO\":\"" + Double.toString(producto.getSaldo()) + "\",\"TITULAR\":\"" + producto.getTercero().getDocumentoTipo().getId() + producto.getTercero().getDocumento() + "\",\"MENSAJE\":\"" + mensaje + "\"}";
+                                        }
                                     }
                                     registros = "[" + registros + "]";
                                     break;
@@ -133,31 +174,31 @@ public class CrudAjax extends HttpServlet {
 
                             switch (tipo) {
                                 case "validar":
-                                    String usuario = getParameterString(request, "usuario");
+                                    String user = getParameterString(request, "usuario");
                                     String clave = getParameterString(request, "clave");
                                     String acceso = "false";
-                                    String mensaje = "Usuario no existe";
-                                    
+                                    mensaje = "Usuario no existe";
+
                                     HttpSession session = request.getSession();
-                                    session.setAttribute("USUARIO","");
-                                    
+                                    session.setAttribute("USUARIO", null);
+
                                     UsuarioJDBC usuarioJDBC = new UsuarioJDBC();
-                                    Usuario usuarioApp = usuarioJDBC.consultarUsuario(usuario, mensaje);
-                                    
-                                    if(usuarioApp!=null){
-                                        if(usuarioApp.getClave().equals(clave)){
+                                    usuario = usuarioJDBC.consultarUsuario(user, mensaje);
+
+                                    if (usuario != null) {
+                                        if (usuario.getClave().equals(clave)) {
                                             acceso = "true";
                                             mensaje = "Acceso correcto";
-                                            session.setAttribute("USUARIO",usuarioApp.getUsuario());
-                                        }else{
+                                            session.setAttribute("USUARIO", usuario);
+                                        } else {
                                             acceso = "false";
-                                            mensaje = "Clave incorrecta ("+usuarioApp.getClave()+"<>"+clave+")";                                            
+                                            mensaje = "Clave incorrecta (" + usuario.getClave() + "<>" + clave + ")";
                                         }
-                                    }else{
+                                    } else {
                                         mensaje += ", No se puede validar el usuario";
                                     }
-                                    
-                                    registros = "{\"ACCESO\":"+acceso+",\"MENSAJE\":\""+mensaje+"\"}";
+
+                                    registros = "{\"ACCESO\":" + acceso + ",\"MENSAJE\":\"" + mensaje + "\"}";
                                     break;
                             }
                             break;
@@ -220,4 +261,25 @@ public class CrudAjax extends HttpServlet {
         }
         return variable;
     }
+
+    public Integer getParameterInteger(HttpServletRequest request, String parametro) {
+        Integer variable = 0;
+        try {
+            variable = Integer.parseInt((String) request.getParameter(parametro));
+        } catch (Exception excepcion) {
+            variable = 0;
+        }
+        return variable;
+    }
+    
+    public Usuario getSessionUsuario(HttpSession session) {
+        Usuario usuario = null;
+        try {
+            usuario = (Usuario) session.getAttribute("USUARIO");
+        } catch (Exception excepcion) {
+            usuario = null;
+        }
+        return usuario;
+    }
+
 }
