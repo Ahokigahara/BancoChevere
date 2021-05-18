@@ -32,6 +32,7 @@ public class Principal extends HttpServlet {
         //aca construir obj usuario
         session.setAttribute("WEBSITE-TITLE","BANCO MEGA");
         session.setAttribute("WEBSITE-DESCRIPTION","BAJO DE INTERESES");
+        session.setAttribute("USUARIO","");
 
         request.getRequestDispatcher("WEB-INF/pages/index.jsp").forward(request, response);        
     }

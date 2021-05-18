@@ -1,3 +1,11 @@
+<%
+    String usuario = "";
+    try {
+        usuario = (String) session.getAttribute("USUARIO");
+    } catch (Exception excepcion) {
+        usuario = "";
+    }
+%>  
 <nav class="navbar navbar-expand-md navbar navbar-light bg-light fixed-top">
     <a class="navbar-brand" href="index.jsp"><img src="/BancoChevere/resources/images/background/desk_icono_bmu.svg" alt="" class="img-logo"><soan class="text-bmu pl-3"><%= session.getAttribute("WEBSITE-TITLE")%></span></a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" aria-expanded="false" aria-label="Toggle navigation">
@@ -10,10 +18,12 @@
                 <a class="nav-link" href="index.jsp">Inicio</a>
             </li>
         </ul>
-        <!-- Button trigger modal -->
-        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#loginModal">
-            Ingresar
-        </button>
+        <!-- Button trigger modal -->   
+        <% if (usuario.length() <= 0) { %>
+        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#loginModal">Ingresar</button>
+        <% } else {%>
+        <a class="btn btn-warning" href="index.jsp?salir">Salir <%= usuario%></a>
+        <% }%>
     </div>
 </nav>
 

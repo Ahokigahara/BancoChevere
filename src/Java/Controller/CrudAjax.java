@@ -1,5 +1,7 @@
-package Presentacion;
+package Controller;
 
+import ControllerDAO.UsuarioJDBC;
+import Model.Usuario;
 import static com.sun.corba.se.spi.presentation.rmi.StubAdapter.request;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -133,8 +135,29 @@ public class CrudAjax extends HttpServlet {
                                 case "validar":
                                     String usuario = getParameterString(request, "usuario");
                                     String clave = getParameterString(request, "clave");
-
-                                    registros = "{\"ACCESO\":true,\"MENSAJE\":\"Acceso correcto\"}";
+                                    String acceso = "false";
+                                    String mensaje = "Usuario no existe";
+                                    
+                                    HttpSession session = request.getSession();
+                                    session.setAttribute("USUARIO","");
+                                    
+                                    UsuarioJDBC usuarioJDBC = new UsuarioJDBC();
+                                    Usuario usuarioApp = usuarioJDBC.consultarUsuario(usuario, mensaje);
+                                    
+                                    if(usuarioApp!=null){
+                                        if(usuarioApp.getClave().equals(clave)){
+                                            acceso = "true";
+                                            mensaje = "Acceso correcto";
+                                            session.setAttribute("USUARIO",usuarioApp.getUsuario());
+                                        }else{
+                                            acceso = "false";
+                                            mensaje = "Clave incorrecta ("+usuarioApp.getClave()+"<>"+clave+")";                                            
+                                        }
+                                    }else{
+                                        mensaje += ", No se puede validar el usuario";
+                                    }
+                                    
+                                    registros = "{\"ACCESO\":"+acceso+",\"MENSAJE\":\""+mensaje+"\"}";
                                     break;
                             }
                             break;
