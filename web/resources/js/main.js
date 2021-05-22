@@ -23,23 +23,38 @@ $(function () {
         $.ajax({
             type: "GET",
             url: "crudAjax.jsp",
-            data: {accion: 'consulta', tabla: 'usuarios', tipo: 'validar', usuario: $('#user').val(), clave: $('#password').val()},
+            data: {accion: 'confirmacion'},
             dataType: "json"
-        })
-                .done(function (response) {
-                    if (response !== undefined) {
-                        if (response.ACCESO !== undefined) {
-                            if (response.ACCESO == true) {
-                                window.location = "indexUser.jsp";
-                            } else {
-                                $.confirm({title: "Acceso", content: response.MENSAJE});
-                            }
-                        }
+        }).done(function (response) {
+            console.log(response);
+            $('#codigoConfirmacionSesion').modal('show');
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            $.confirm({title: "error", content: "Se presentó un error al validar el usuario. \n" + jqXHR.responseText});
+        });
+
+    });
+
+
+    $('#btnConfirLoginCode').click(function () {
+        $('#codigoConfirmacionSesion').modal('hide');
+        $.ajax({
+            type: "GET",
+            url: "crudAjax.jsp",
+            data: {accion: 'consulta', tabla: 'usuarios', tipo: 'validar', usuario: $('#user').val(), clave: $('#password').val(), codigo: $('#confirLoginCode').val()},
+            dataType: "json"
+        }).done(function (response) {
+            if (response !== undefined) {
+                if (response.ACCESO !== undefined) {
+                    if (response.ACCESO == true) {
+                        window.location = "indexUser.jsp";
+                    } else {
+                        $.confirm({title: "Acceso", content: response.MENSAJE});
                     }
-                })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    $.confirm({title: "error", content: "Se presentó un error al validar el usuario. \n" + jqXHR.responseText});
-                });
+                }
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            $.confirm({title: "error", content: "Se presentó un error al validar el usuario. \n" + jqXHR.responseText});
+        });
     });
 
     $('.modal').on('show.bs.modal', function (event) {

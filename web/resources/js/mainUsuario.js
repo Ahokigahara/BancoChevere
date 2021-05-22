@@ -7,7 +7,7 @@ function rowStyle(row, index) {
 }
 
 function currencyFormatter(value, row, index) {
-	return formatCurrency(value);
+    return formatCurrency(value);
 }
 
 function formatCurrency(num) {
@@ -118,7 +118,7 @@ $(function () {
                 {field: 'ORIGEN', title: 'Producto Origen', class: 'text-nowrap'},
                 {field: 'ENTIDAD', title: 'Entidad', class: 'text-nowrap'},
                 {field: 'REFERENCIA', title: 'Referencia', class: 'text-nowrap'},
-                {field: 'VALOR', title: 'Valor', class: 'text-nowrap', formatter: currencyFormatter},
+                {field: 'VALOR', title: 'Valor', class: 'text-nowrap text-right font-weight-bolder', formatter: currencyFormatter},
                 {field: 'CONCEPTO', title: 'Concepto', class: 'text-nowrap'}
             ]
         ]
@@ -134,7 +134,7 @@ $(function () {
                 {field: 'ORIGEN', title: 'Cuenta Origen', class: 'text-nowrap'},
                 {field: 'DESTINO', title: 'Cuenta Destino', class: 'text-nowrap'},
                 {field: 'TITULARDESTINO', title: 'Titular Producto Destino', class: 'text-nowrap'},
-                {field: 'VALOR', title: 'Valor', class: 'text-nowrap', formatter: currencyFormatter},
+                {field: 'VALOR', title: 'Valor', class: 'text-nowrap text-right font-weight-bolder', formatter: currencyFormatter},
                 {field: 'CONCEPTO', title: 'Concepto', class: 'text-nowrap'}
             ]
         ]
@@ -145,13 +145,31 @@ $(function () {
         theadClasses: 'thead-light',
         columns: [
             [
+                {field: 'ID', title: 'id', class: 'text-nowrap'},
                 {field: 'NUMERO', title: 'Número de Producto', class: 'text-nowrap'},
                 {field: 'TIPO', title: 'Tipo de Producto', class: 'text-nowrap'},
-                {field: 'SALDO', title: 'Saldo', class: 'text-nowrap', formatter: currencyFormatter},
+                {field: 'SALDO', title: 'Saldo', class: 'text-nowrap text-right font-weight-bolder', formatter: currencyFormatter},
                 {field: 'TITULAR', title: 'Documento Titular', class: 'text-nowrap'}
             ]
         ]
     });
+
+    $('#tableMovimientosProducto').bootstrapTable('destroy').bootstrapTable({
+        locale: 'es-ES',
+        classes: 'table table-bordered table-hover table-sm table-responsive-sm table-striped',
+        theadClasses: 'thead-light',
+        columns: [
+            [
+                {field: 'ID', title: 'id', class: 'text-nowrap'},
+                {field: 'ORIGEN', title: 'Origen', class: 'text-nowrap'},
+                {field: 'DESTINO', title: 'Destino', class: 'text-nowrap'},
+                {field: 'TIPO', title: 'Tipo', class: 'text-nowrap'},
+                {field: 'FECHA', title: 'Fecha', class: 'text-nowrap'},
+                {field: 'VALOR', title: 'Valor', class: 'text-nowrap text-right font-weight-bolder', formatter: currencyFormatter}
+            ]
+        ]
+    });
+
     $('.producto').producto();
     $('#entidadPago').entidad();
     $('#entidadPago').on("change", function () {
@@ -184,7 +202,7 @@ $(function () {
     });
     $('#productoDestinoTransferencia').on("change", function () {
         let loProductoDestino = $(this);
-        
+
         $.ajax({
             type: "GET",
             url: "crudAjax.jsp",
@@ -193,17 +211,16 @@ $(function () {
         })
                 .done(function (response) {
                     if (response != undefined) {
-                        if (response.RESULTADO != undefined ) {
-                            if(response.RESULTADO == true){
-                            $('#productoDestinoTitularTransferencia').val(response.TITULAR);
-                            $('#valorTransferencia').removeAttr("disabled");
-                            $('#conceptoTransferencia').removeAttr("disabled");
-                        }
-                        else{
-                            $.confirm({title: "error", content: "No se ha encontrado un producto con el numero indicado" });
-                        }
-                        }else{
-                            $.confirm({title: "error", content: "Debe ingresar un numero de cuenta destino para realizar la transferencia" });
+                        if (response.RESULTADO != undefined) {
+                            if (response.RESULTADO == true) {
+                                $('#productoDestinoTitularTransferencia').val(response.TITULAR);
+                                $('#valorTransferencia').removeAttr("disabled");
+                                $('#conceptoTransferencia').removeAttr("disabled");
+                            } else {
+                                $.confirm({title: "error", content: "No se ha encontrado un producto con el numero indicado"});
+                            }
+                        } else {
+                            $.confirm({title: "error", content: "Debe ingresar un numero de cuenta destino para realizar la transferencia"});
                         }
                     }
                 })
@@ -211,6 +228,27 @@ $(function () {
                     $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
                 });
     });
+
+    $('#tableProductos').on('click-row.bs.table', function (row, $element, field) {
+        let loTable = $('#tableMovimientosProducto');
+        let lcTableUrl = 'crudAjax.jsp?accion=consulta&tabla=movimientos&id=' + $element.ID;
+        let loModalMovimientos = $('#verMovimientos');
+
+        loTable.bootstrapTable('refreshOptions', {url: lcTableUrl});
+       // loTable.bootstrapTable('refresh', {url: lcTableUrl});
+
+        $.each($element, function (key, value) {
+            value = (key=='SALDO'?currencyFormatter(value):value);
+            $('#movimiento-'+key).val(value);
+        });
+
+        loModalMovimientos.modal('show');
+    });
+
+    $('#verMovimientos').on('show.bs.modal', function (event) {
+        //$('#tableMovimientosProducto').bootstrapTable('refresh');
+    });
+
 
     $('.modal').on('show.bs.modal', function (event) {
         $(this).find('input[name], select[name]').each(function () {
@@ -220,9 +258,9 @@ $(function () {
 
     $('.realizarInsercion').on("click", function () {
         let lcModal = '#' + $(this).attr('data-modal');
-        let lcTable= '#' + $(this).attr('data-table');
+        let lcTable = '#' + $(this).attr('data-table');
         var codigo = $('#codigo').val();
-        if($(this).attr('data-tabla')==='transferencias'){
+        if ($(this).attr('data-tabla') === 'transferencias') {
             codigo = $('#codigoT').val();
         }
         var laParams = {accion: $(this).attr('data-accion'), tabla: $(this).attr('data-tabla'), codigo: codigo};
@@ -242,7 +280,7 @@ $(function () {
                             $.confirm({title: "Resultado", content: response.MENSAJE});
                             if (response.RESULTADO == true) {
                                 $(lcModal).modal('hide');
-                                $(lcTable).bootstrapTable('refresh');	
+                                $(lcTable).bootstrapTable('refresh');
                             }
                         }
                     }
@@ -251,9 +289,9 @@ $(function () {
                     $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
                 });
     });
-     $('.confirmacion').on("click", function () {
+    $('.confirmacion').on("click", function () {
         let lcModal = '#' + $(this).attr('data-modal');
-        let lcTable= '#' + $(this).attr('data-table');
+        let lcTable = '#' + $(this).attr('data-table');
         var laParams = {accion: $(this).attr('data-accion')};
         $(lcModal).find('input[name], select[name]').each(function () {
             laParams[$(this).attr('name')] = $(this).val();
@@ -265,7 +303,7 @@ $(function () {
             data: laParams,
             dataType: "json"
         })
-                
+
     });
-    
+
 });

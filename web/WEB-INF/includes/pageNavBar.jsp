@@ -27,17 +27,17 @@
         <% if (usuario == null) { %>
         <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#loginModal">Ingresar</button>
         <% } else {%>
-        <a class="btn btn-warning" href="index.jsp?salir">Cerrar sesión <b><%= usuario.getUsuario() %></b></a>
+        <a class="btn btn-warning" href="index.jsp?salir">Cerrar sesión <b><%= usuario.getUsuario()%></b></a>
         <% }%>
     </div>
 </nav>
 
-<!-- Modal -->
+<!-- Modal inicio de sesion -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="loginModalLabel">Login</h5>
+                <h5 class="modal-title" id="loginModalLabel">Credenciales</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -45,17 +45,16 @@
             <div class="modal-body">
                 <form>
                     <div class="form-row">
-                        <div class="form-group col-12">
+                        <div class="form-group col-6">
                             <label for="user">Usuario</label>
-                            <input type="" class="form-control" id="user" name="user">  
+                            <input type="text" class="form-control" id="user" name="user" autocomplete="false" required="required">  
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-12">
+                        <div class="form-group col-6">
                             <label for="password">Clave</label>
-                            <input type="password" class="form-control" id="password" name="password">  
+                            <input type="password" class="form-control" id="password" name="password" autocomplete="off" required="required">  
                         </div>
                     </div>
+                    <small class="text-muted">Ingrese sus credenciales de acceso para poder iniciar sesión</small>
                 </form>
             </div>
             <div class="modal-footer">
@@ -65,3 +64,27 @@
         </div>
     </div>
 </div>
+
+<!-- Modal codigo confirmacion inicio de sesion -->
+<div class="modal fade" id="codigoConfirmacionSesion" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="codigoConfirmacionSesionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">C&oacutedigo de seguridad</h5>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-row">
+                        <div class="form-group col-12">
+                            <label for="confirLoginCode" class="required">Ingrese el código de seguridad de 6 dígitos que fue enviado a su correo eléctronico registrado.</label>
+                            <input type="password" class="form-control" id="confirLoginCode" name="confirLoginCode" autocomplete="off" required="required" >
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning realizarInsercion" id="btnConfirLoginCode">Entrar</button>
+            </div>
+        </div>
+    </div>
+</div> 
