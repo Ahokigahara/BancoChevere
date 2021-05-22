@@ -1,9 +1,11 @@
 package Controller;
 
+import ControllerDAO.MovimientoJDBC;
 import ControllerDAO.ProductoJDBC;
 import ControllerDAO.ReferenciaPagoJDBC;
 import ControllerDAO.TerceroJDBC;
 import ControllerDAO.UsuarioJDBC;
+import Model.Movimiento;
 import Model.Producto;
 import Model.ReferenciaPago;
 import Model.Tercero;
@@ -11,7 +13,15 @@ import Model.Usuario;
 import static com.sun.corba.se.spi.presentation.rmi.StubAdapter.request;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Date;
 import java.util.List;
+import java.util.Properties;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -52,25 +62,59 @@ public class CrudAjax extends HttpServlet {
                     String origen = "";
                     String valor = "";
                     String concepto = "";
-
+                    String codigo="";
+                    String codigoConfirmacion= "";
                     switch (tabla) {
                         case "transferencias":
                             origen = getParameterString(request, "productoOrigenTransferencia");
                             String destino = getParameterString(request, "productoDestinoTransferencia");
                             valor = getParameterString(request, "valorTransferencia");
                             concepto = getParameterString(request, "conceptoTransferencia");
-
-                            registros = "{\"RESULTADO\":true,\"MENSAJE\":\"Transferecnia de " + origen + " hasta " + destino + " realizada por valor " + valor + ", concepto " + concepto + " \"}";
+                             codigo=(String) request.getSession().getAttribute("cod");
+                             codigoConfirmacion= getParameterString(request, "codigo");
+                             if(codigoConfirmacion.equals(codigo)){
+                                request.getSession().removeAttribute("cod");
+                                MovimientoJDBC movimientoPagoJDBC = new MovimientoJDBC();
+                                String respuesta=movimientoPagoJDBC.insertarMovimientoTransferencia("TRANSFERENCIA", Integer.parseInt(origen), Integer.parseInt(destino), Double.parseDouble(valor), concepto);
+                                if(respuesta!= ""){
+                                   enviarCorreo("confirmacion", usuario, request);
+                                registros = "{\"RESULTADO\":true,\"MENSAJE\":\" Transferencia realizada correctamente, se ha enviado la confirmación al correo electrónico registrado\"}"; 
+                                }else{
+                                   registros = "{\"RESULTADO\":false,\"MENSAJE\":\"El producto seleccionado no tiene saldo suficiente para realizar la transacción\"}";  
+                                }
+                                
+                            }else{
+                                //registros = "{\"RESULTADO\":true,\"MENSAJE\":\"Pago de " + origen + " a " + entidad + " referencia " + referencia + ", valor " + valor + ", concepto " + concepto + " \"}";
+                                registros = "{\"RESULTADO\":false,\"MENSAJE\":\"Codigo incorrecto, por favor intente nuevamente\"}";
+                            }
                             break;
 
                         case "pagos":
                             origen = getParameterString(request, "productoOrigenPago");
                             String entidad = getParameterString(request, "entidadPago");
                             String referencia = getParameterString(request, "referenciaPago");
+                             codigo=(String) request.getSession().getAttribute("cod");
+                             codigoConfirmacion= getParameterString(request, "codigo");
                             valor = "0";
-                            concepto = "-";
-
-                            registros = "{\"RESULTADO\":true,\"MENSAJE\":\"Pago de " + origen + " a " + entidad + " referencia " + referencia + ", valor " + valor + ", concepto " + concepto + " \"}";
+                            concepto = getParameterString(request, "conceptoPago");;
+                            
+                            if(codigoConfirmacion.equals(codigo)){
+                                request.getSession().removeAttribute("cod");
+                                MovimientoJDBC movimientoPagoJDBC = new MovimientoJDBC();
+                                String respuesta=movimientoPagoJDBC.insertarMovimientoPago("PAGO", Integer.parseInt(origen), Integer.parseInt(entidad), referencia, concepto);
+                                if(respuesta!= ""){
+                                   enviarCorreo("confirmacion", usuario, request);
+                                   ProductoJDBC.instancia().actualizarSaldo(origen,respuesta);
+                                registros = "{\"RESULTADO\":true,\"MENSAJE\":\" Pago realizado correctamente, se ha enviado la confirmación al correo electrónico registrado\"}"; 
+                                }else{
+                                   registros = "{\"RESULTADO\":false,\"MENSAJE\":\"El producto seleccionado no tiene saldo suficiente para realizar la transacción\"}";  
+                                }
+                                
+                            }else{
+                                //registros = "{\"RESULTADO\":true,\"MENSAJE\":\"Pago de " + origen + " a " + entidad + " referencia " + referencia + ", valor " + valor + ", concepto " + concepto + " \"}";
+                                registros = "{\"RESULTADO\":false,\"MENSAJE\":\"Codigo incorrecto, por favor intente nuevamente\"}";
+                            }
+                            
                             break;
 
                     }
@@ -80,12 +124,17 @@ public class CrudAjax extends HttpServlet {
                 case "consulta":
                     switch (tabla) {
                         case "transferencias":
-                            registros = "";
-                            for (int row = 0; row < 15; row++) {
-                                registros += (registros.length() > 0 ? "," : "") + "{\"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\"x\",\"ORIGEN\":\"o\",\"CANAL\":\"l\",\"VALOR\":\"1\"}";
+                             registros = "";
+                            List<Movimiento> movimientos = MovimientoJDBC.instancia().consultarMovimientos(usuario.getId(), 2);
+                            for (int row = 0; row < movimientos.size(); row++) {
+                                Movimiento mov = movimientos.get(row);
+                                
+                                registros += (registros.length() > 0 ? "," : "") + "{\"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\""+mov.getFecha()+"\",\"ORIGEN\":"+mov.getProductoOrigenNumero()+",\"DESTINO\":"+mov.getProductoDestinoId()+
+                                        ",\"TITULARDESTINO\":\""+mov.getEntidadDestino()+"\",\"VALOR\":"+mov.getMonto()+",\"CONCEPTO\":\""+mov.getConcepto()+"\"}";
                             }
                             registros = "[" + registros + "]";
                             break;
+                            
 
                         case "referencias":
                             Integer entidad = getParameterInteger(request, "entidad");
@@ -113,7 +162,7 @@ public class CrudAjax extends HttpServlet {
                                 List<Tercero> terceros = terceroJDBC.consultarEntidades(mensaje);
                                 for (int row = 0; row < terceros.size(); row++) {
                                     Tercero tercero = terceros.get(row);
-                                    registros += (registros.length() > 0 ? "," : "") + "{\"ID\":" + Integer.toString(tercero.getId()) + ",\"NOMBRE\":\""+tercero.getNombres()+" "+tercero.getApellidos()+ "\"}";
+                                    registros += (registros.length() > 0 ? "," : "") + "{\"ID\":" + (tercero.getId()) + ",\"NOMBRE\":\""+tercero.getNombres()+" "+tercero.getApellidos()+ "\"}";
                                 }
                             }
                             registros = "[" + registros + "]";
@@ -121,8 +170,12 @@ public class CrudAjax extends HttpServlet {
 
                         case "pagos":
                             registros = "";
-                            for (int row = 0; row < 15; row++) {
-                                registros += (registros.length() > 0 ? "," : "") + "{\"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\"x\",\"ORIGEN\":\"o\",\"CANAL\":\"l\",\"VALOR\":\"1\"}";
+                            List<Movimiento> movimientosPago = MovimientoJDBC.instancia().consultarMovimientosPago(usuario.getId(), 1);
+                            for (int row = 0; row < movimientosPago.size(); row++) {
+                                Movimiento mov = movimientosPago.get(row);
+                                
+                                registros += (registros.length() > 0 ? "," : "") + "{\"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\""+mov.getFecha()+"\",\"ORIGEN\":"+mov.getProductoOrigenNumero()+",\"ENTIDAD\":\""+mov.getEntidadDestino()+
+                                        "\",\"REFERENCIA\":\""+mov.getReferencia()+"\",\"VALOR\":"+mov.getMonto()+",\"CONCEPTO\":\""+mov.getConcepto()+"\"}";
                             }
                             registros = "[" + registros + "]";
                             break;
@@ -141,7 +194,7 @@ public class CrudAjax extends HttpServlet {
                                         List<Producto> productos = productoJDBC.consultarProductos(usuario.getId(), mensaje);
                                         for (int row = 0; row < productos.size(); row++) {
                                             producto = productos.get(row);
-                                            registros += (registros.length() > 0 ? "," : "") + "{\"VALOR\":" + Integer.toString(producto.getId()) + ",\"TEXTO\":\"" + Integer.toString(producto.getId()) + " - " + producto.getProductoTipo().getNombre() + " - " + producto.getTercero().getNombres() + " " + producto.getTercero().getApellidos() + "\"}";
+                                            registros += (registros.length() > 0 ? "," : "") + "{\"VALOR\":" + Integer.toString(producto.getNumero()) + ",\"TEXTO\":\"" + Integer.toString(producto.getNumero()) + " - " + producto.getProductoTipo().getNombre() + " - $"+producto.getSaldo()+"\"}";
                                         }
                                     }
                                     registros = "[" + registros + "]";
@@ -155,7 +208,7 @@ public class CrudAjax extends HttpServlet {
                                         List<Producto> productos = productoJDBC.consultarProductos(usuario.getId(), mensaje);
                                         for (int row = 0; row < productos.size(); row++) {
                                             producto = productos.get(row);
-                                            registros += (registros.length() > 0 ? "," : "") + "{\"NUMERO\":" + Integer.toString(producto.getId()) + ",\"TIPO\":\"" + producto.getProductoTipo().getNombre() + "\",\"SALDO\":\"" + Double.toString(producto.getSaldo()) + "\",\"TITULAR\":\"" + producto.getTercero().getDocumentoTipo().getId() + producto.getTercero().getDocumento() + "\",\"MENSAJE\":\"" + mensaje + "\"}";
+                                            registros += (registros.length() > 0 ? "," : "") + "{\"NUMERO\":" + Integer.toString(producto.getNumero()) + ",\"TIPO\":\"" + producto.getProductoTipo().getNombre() + "\",\"SALDO\":\"" + Double.toString(producto.getSaldo()) + "\",\"TITULAR\":\"" + producto.getTercero().getDocumentoTipo().getId() + producto.getTercero().getDocumento() + "\",\"MENSAJE\":\"" + mensaje + "\"}";
                                         }
                                     }
                                     registros = "[" + registros + "]";
@@ -163,7 +216,24 @@ public class CrudAjax extends HttpServlet {
 
                                 case "destino":
                                     String productoDestino = getParameterString(request, "productoDestino");
-                                    registros = "{\"PRODUCTO\":\"" + productoDestino + "\",\"TITULAR\":\"Titular Producto " + productoDestino + "\"}";
+                                    if(productoDestino!= null || !productoDestino.isEmpty()){
+                                        Producto productoDest=ProductoJDBC.instancia().consultarProducto(Integer.parseInt(productoDestino), "");
+                                       // origen = getParameterString(request, "productoOrigenTransferencia");
+                                        if(productoDest!=null){
+                                            //if(productoDest.getNumero()==Integer.parseInt(origen)){
+                                              //  registros = "{\"PRODUCTO\":\"" + productoDestino + "\",\"RESULTADO\":\"dup\",\"TITULAR\":\"" + productoDest.getTercero().getNombres()+" "+productoDest.getTercero().getApellidos() + "\"}";
+                                            //}else{
+                                            registros = "{\"PRODUCTO\":\"" + productoDestino + "\",\"RESULTADO\":true,\"TITULAR\":\"" + productoDest.getTercero().getNombres()+" "+productoDest.getTercero().getApellidos() + "\"}";
+                                            //}
+                                        }else{
+                                             registros = "{\"PRODUCTO\":\"" + productoDestino + "\",\"RESULTADO\":false,\"TITULAR\":\"\"}";
+                                        }
+                                    }else{
+                                        registros = "{\"PRODUCTO\":\"" + productoDestino + "\",\"RESULTADO\":null,\"TITULAR\":\"\"}";
+                                    }
+                                            
+                                            
+                                    
                                     break;
                             }
 
@@ -190,6 +260,7 @@ public class CrudAjax extends HttpServlet {
                                             acceso = "true";
                                             mensaje = "Acceso correcto";
                                             session.setAttribute("USUARIO", usuario);
+                                            enviarCorreo("ingreso", usuario,request);
                                         } else {
                                             acceso = "false";
                                             mensaje = "Clave incorrecta (" + usuario.getClave() + "<>" + clave + ")";
@@ -205,7 +276,10 @@ public class CrudAjax extends HttpServlet {
                     }
                     out.println(registros);
                     break;
-
+                    
+                case "confirmacion": 
+                    enviarCorreo("codigo",usuario,request);
+                break;
                 default:
                     out.println("[]");
                     break;
@@ -281,5 +355,152 @@ public class CrudAjax extends HttpServlet {
         }
         return usuario;
     }
-
+     
+    
+    
+    public void enviarCorreo(String asunto,Usuario usuario,HttpServletRequest request){
+        
+         final Properties properties = new Properties();
+         Session session;
+         String subject="";
+         String mensaje="";
+                properties.put("mail.smtp.host", "smtp.gmail.com");
+                properties.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+		properties.put("mail.smtp.starttls.enable", "true");
+		properties.put("mail.smtp.port",25);
+		properties.put("mail.smtp.mail.sender","notificacionesbmu@gmail.com");
+		properties.put("mail.smtp.user", "notificacionesbmu");
+		properties.put("mail.smtp.clave", "Clave12345!");    //La clave de la cuenta
+    properties.put("mail.smtp.auth", "true");    //Usar autenticación mediante usuario y clave
+    properties.put("mail.smtp.starttls.enable", "true"); //Para conectar de manera segura al servidor SMTP
+    properties.put("mail.smtp.port", "587");
+ 
+    HttpSession httpSession = request.getSession();
+                                    
+		session = Session.getDefaultInstance(properties);
+                String codigo=generarCodigo();
+                httpSession.setAttribute("cod", codigo);
+                request.setAttribute("cod", codigo);
+                try{
+			MimeMessage message = new MimeMessage(session);
+			message.setFrom(new InternetAddress((String)properties.get("mail.smtp.mail.sender")));
+			message.addRecipient(Message.RecipientType.TO, new InternetAddress(usuario.getEmail()));
+                        switch(asunto){
+               case "codigo":
+                    subject="Código de seguridad";
+                    mensaje="Estimado cliente:\n" +
+                            "\n" +
+                            "Banco MU le informa que el codigo de seguridad para realizar su Pago es "+codigo+" \n" +
+                            "\n" +
+                            "Banco MU.\n" +
+                            "\n" +
+                            "============================================\n" +
+                            "\n" +
+                            "Por favor no responda este correo.\n" +
+                            "\n" +
+                            "Para cualquier informacion adicional puede consultar nuestra pagina de Internet o comunicarse con nosotros a traves de las siguientes opciones:\n" +
+                            "\n" +
+                            "Linea MU\n" +
+                            "Bogota 3077060\n" +
+                            "Resto del pais 018000910038\n" +
+                            "============================================\n" +
+                            "\n" +
+                            "Este correo fue enviado por peticion suya. Si desea no ser contactado desde esta direccion de correo, por favor ingrese a nuestra pagina de Internet o acerquese a la oficina sede de su cuenta para modificar la matricula de notificaciones. Toda informacion contenida en este mensaje es considerada de caracter confidencial y/o privilegiado y esta dirigida unicamente a su destinatario, quien por tal razon es el unico autorizado para leerla y utilizarla. Si usted ha recibido por error este mensaje debe eliminarlo totalmente de su sistema y comunicar tal situacion al remitente de inmediato.\n" +
+                            "============================================\n" +
+                            "\n" +
+                            "Tildes omitidas para manejar compatibilidad entre agentes de correo\n" +
+                            "\n" +
+                            "============================================";
+                   
+               break;   
+               case "ingreso":
+                   
+                   subject="Ingreso a canal digital ";
+                    mensaje="Estimado cliente.\n" +
+                            "\n" +
+                            "Banco MU le informa que usted ingreso el "+ new Date()+" a nuestro canal digital. Si usted no es quien esta intentando ingresar, por favor comuniquese de inmediato con la Linea de atencion 307 7060 en Bogota, 01 8000 910 038 en el ambito nacional o #233 marcando desde su celular. De lo contrario, omita este mensaje.\n" +
+                            "\n" +
+                            "Su banco MU.\n" +
+                            "\n" +
+                            "============================================\n" +
+                            "\n" +
+                            "Por favor no responda este correo.\n" +
+                            "\n" +
+                            "Para cualquier informacion adicional puede consultar nuestra pagina de Internet o comunicarse con nosotros a traves de las siguientes opciones:\n" +
+                            "\n" +
+                            "Linea MU\n" +
+                            "Bogota 3077060\n" +
+                            "Resto del pais 018000910038\n" +
+                            "============================================\n" +
+                            "\n" +
+                            "Este correo fue enviado por peticion suya. Si desea no ser contactado desde esta direccion de correo, por favor ingrese a nuestra pagina de Internet o acerquese a la oficina sede de su cuenta para modificar la matricula de notificaciones. Toda informacion contenida en este mensaje es considerada de caracter confidencial y/o privilegiado y esta dirigida unicamente a su destinatario, quien por tal razon es el unico autorizado para leerla y utilizarla. Si usted ha recibido por error este mensaje debe eliminarlo totalmente de su sistema y comunicar tal situacion al remitente de inmediato.\n" +
+                            "\n" +
+                            "============================================\n" +
+                            "\n" +
+                            "Tildes omitidas para manejar compatibilidad entre agentes de correo\n" +
+                            "\n" +
+                            "============================================";
+                  break;
+                  case "confirmacion":
+                   
+                   subject="NOTIFICACION DE TRANSACCION ";
+                    mensaje="Estimado cliente con cuenta \n" +
+                            "\n" +
+                            "Banco MU le informa que el dia "+new Date()+" se realizo una transaccion EXITOSA a traves del canal digital. Oficina/Terminal: , que cumple con las condiciones de notificacion establecidas por usted.\n" +
+                            "\n" +
+                            "Nos complace contar con clientes como usted.\n" +
+                            "\n" +
+                            "============================================\n" +
+                            "\n" +
+                            "Por favor no responda este correo.\n" +
+                            "\n" +
+                            "Para cualquier informacion adicional puede consultar nuestra pagina de Internet\n" +
+                            "\n" +
+                            "============================================\n" +
+                            "\n" +
+                            "Este correo fue enviado por peticion suya. Si desea no ser contactado desde esta direccion de correo, por favor ingrese a nuestra pagina de Internet o acerquese a la oficina sede de su cuenta para modificar la matricula de notificaciones. Toda informacion contenida en este mensaje es considerada de caracter confidencial y/o privilegiado y esta dirigida unicamente a su destinatario, quien por tal razon es el unico autorizado para leerla y utilizarla. Si usted ha recibido por error este mensaje debe eliminarlo totalmente de su sistema y comunicar tal situacion al remitente de inmediato.\n" +
+                            "\n" +
+                            "============================================\n" +
+                            "\n" +
+                            "Tildes omitidas para manejar compatibilidad entre agentes de correo\n" +
+                            "\n" +
+                            "============================================";
+                  break;
+                       
+           }
+			message.setSubject(subject);
+			message.setText(mensaje);
+			Transport t = session.getTransport("smtp");
+                        
+			t.connect("smtp.gmail.com",(String)properties.get("mail.smtp.user"), "Clave12345!");
+			t.sendMessage(message, message.getAllRecipients());
+			t.close();
+		}catch (MessagingException me){
+                    me.printStackTrace();   //Si se produce un error
+                        //Aqui se deberia o mostrar un mensaje de error o en lugar
+                        //de no hacer nada con la excepcion, lanzarla para que el modulo
+                        //superior la capture y avise al usuario con un popup, por ejemplo.
+			return;
+		}
+           
+    }
+    
+     private String generarCodigo(){
+         
+        String key="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        String pswd="";
+        for (int i = 0; i < 6; i++) {
+			pswd+=(key.charAt((int)(Math.random() * key.length())));
+		}
+        return pswd;
+    }
+     private boolean validarSaldo(int saldo, int valor){
+         if(saldo>=valor){
+             return true;
+         }else if(saldo<valor){
+             return false;
+         }
+         return false;
+     }
+     
 }

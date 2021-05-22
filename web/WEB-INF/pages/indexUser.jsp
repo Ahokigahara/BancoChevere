@@ -26,7 +26,7 @@
                         <div class="row h5">
                             <div class="col-6">
                                 <i class="fas fa-landmark"></i> Portal Bancario<br/>
-                                <small class="text-muted"><%= Integer.toString(usuario.getId()) + " - " + usuario.getDocumentoTipo().getNombre() + " - " + usuario.getDocumento()%></small>
+                                <small class="text-muted"><%= usuario.getDocumentoTipo().getNombre() + " - " + usuario.getDocumento()%></small>
                             </div>
                             <div class="col-6 text-right">
                                 <%= usuario.getNombres() + " " + usuario.getApellidos()%> <br/> <small class="text-muted"><%= usuario.getEmail()%></small>
@@ -103,6 +103,7 @@
                                                     </div>
                                                 </div>
                                                 <!-- Modal -->
+                                                
                                                 <div class="modal fade" id="realizarTransferencia" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                                                     <div class="modal-dialog modal-dialog-centered">
                                                         <div class="modal-content">
@@ -126,7 +127,7 @@
                                                                         <div class="form-group col-12">
                                                                             <label for="productoDestinoTransferencia" class="required">Número del producto destino</label>
                                                                             <input type="text" class="form-control" id="productoDestinoTransferencia" name="productoDestinoTransferencia" required="required">
-                                                                            <small id="productoDestinoTransferenciaAyuda" class="form-text text-muted">Ecriba el numero de cuenta al cual va a realizar la transferencia</small>
+                                                                            <small id="productoDestinoTransferenciaAyuda" class="form-text text-muted">Escriba el numero de cuenta al cual va a realizar la transferencia</small>
                                                                         </div>
                                                                     </div>
                                                                     <div class="form-row">
@@ -154,7 +155,8 @@
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                                                                <button type="button" class="btn btn-warning realizarInsercion" data-accion="insercion" data-tabla="transferencias" data-modal="realizarTransferencia" data-table="tableTransferencias">Realizar Transferencia</button>
+                                                                    <button id="btnConfirmarRealizarTransaccion" type="button" class="btn btn-warning confirmacion" data-toggle="modal" data-target="#codigoConfirmacionTransferencia" data-accion="confirmacion" accesskey="R">Realizar Transaccion</button>
+                                                                <!--<button type="button" class="btn btn-warning realizarInsercion" data-accion="insercion" data-tabla="transferencias" data-modal="realizarTransferencia" data-table="tableTransferencias">Realizar Transferencia</button>-->
                                                             </div>
                                                         </div>
                                                     </div>
@@ -237,17 +239,74 @@
                                                                 </div>
                                                                 <div class="modal-footer">
                                                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                                                                    <button type="button" class="btn btn-warning realizarInsercion" id="btnConfirmarRealizarPago" data-accion="insercion" data-tabla="pagos" data-modal="realizarPago" data-table="tablePagos")>Realizar Pago</button>
+                                                                    <button id="btnConfirmarRealizarPago" type="button" class="btn btn-warning confirmacion" data-toggle="modal" data-target="#codigoConfirmacion" data-accion="confirmacion" accesskey="R">Realizar pago</button>
+                                                                    <!--<button type="button" class="btn btn-warning realizarInsercion" id="btnConfirmarRealizarPago" data-accion="insercion" data-tabla="pagos" data-modal="realizarPago" data-table="tablePagos")>Realizar Pago</button>-->
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>                                                        
-
-                                                </div>
+                                                    
                                             </div>
 
                                         </div>
                                     </div>
+                                        <!-- Confirmation code Modal-->
+                                                    <div class="modal fade" id="codigoConfirmacion" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title" id="staticBackdropLabel">C&oacutedigo de seguridad</h5>
+                                                                        <span aria-hidden="true">&times;</span>
+                                                                    </button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <form>
+                                                                        <div class="form-row">
+                                                                            <div class="form-group col-12">
+                                                                                <label for="codigo" class="required">Ingrese el código de seguridad de 6 dígitos que fue enviado a su correo eléctronico registrado.</label>
+                                                                                <input type="password" class="form-control" id="codigo" name="codigo" required="required" >
+                                                                                
+                                                                            </div>
+                                                                        </div>
+                                                                                                                                        
+                                                                    </form>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                   
+                                                                    <button type="button" class="btn btn-warning realizarInsercion" id="btnConfirmarCodigo" data-dismiss="modal" data-accion="insercion" data-tabla="pagos" data-modal="realizarPago" data-table="tablePagos")>Enviar</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>  
+                                                   <!-- Confirmation code Modal Trans-->
+                                                    <div class="modal fade" id="codigoConfirmacionTransferencia" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title" id="staticBackdropLabel">C&oacutedigo de seguridad</h5>
+                                                                        <span aria-hidden="true">&times;</span>
+                                                                    </button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <form>
+                                                                        <div class="form-row">
+                                                                            <div class="form-group col-12">
+                                                                                <label for="codigoT" class="required">Ingrese el código de seguridad de 6 dígitos que fue enviado a su correo eléctronico registrado.</label>
+                                                                                <input type="password" class="form-control" id="codigoT" name="codigoT" required="required" >
+                                                                                
+                                                                            </div>
+                                                                        </div>
+                                                                                                                                        
+                                                                    </form>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                   
+                                                                    <button type="button" class="btn btn-warning realizarInsercion" id="btnConfirmarCodigo" data-dismiss="modal" data-accion="insercion" data-tabla="transferencias" data-modal="realizarTransferencia" data-table="tableTransferencias")>Enviar</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>  
+                                                </div>
                                 </div>
                             </div>
                         </div>

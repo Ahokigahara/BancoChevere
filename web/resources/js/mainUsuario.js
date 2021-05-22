@@ -131,8 +131,8 @@ $(function () {
             [
                 {field: 'CONSECUTIVO', title: 'ID'},
                 {field: 'FECHA', title: 'Fecha de Transferencia', class: 'text-nowrap'},
-                {field: 'ORIGEN', title: 'Nombre Servicio - Referencia', class: 'text-nowrap'},
-                {field: 'DEESTINO', title: 'Destino', class: 'text-nowrap'},
+                {field: 'ORIGEN', title: 'Cuenta Origen', class: 'text-nowrap'},
+                {field: 'DESTINO', title: 'Cuenta Destino', class: 'text-nowrap'},
                 {field: 'TITULARDESTINO', title: 'Titular Producto Destino', class: 'text-nowrap'},
                 {field: 'VALOR', title: 'Valor', class: 'text-nowrap', formatter: currencyFormatter},
                 {field: 'CONCEPTO', title: 'Concepto', class: 'text-nowrap'}
@@ -184,7 +184,7 @@ $(function () {
     });
     $('#productoDestinoTransferencia').on("change", function () {
         let loProductoDestino = $(this);
-
+        
         $.ajax({
             type: "GET",
             url: "crudAjax.jsp",
@@ -193,10 +193,17 @@ $(function () {
         })
                 .done(function (response) {
                     if (response != undefined) {
-                        if (response.TITULAR != undefined) {
+                        if (response.RESULTADO != undefined ) {
+                            if(response.RESULTADO == true){
                             $('#productoDestinoTitularTransferencia').val(response.TITULAR);
                             $('#valorTransferencia').removeAttr("disabled");
                             $('#conceptoTransferencia').removeAttr("disabled");
+                        }
+                        else{
+                            $.confirm({title: "error", content: "No se ha encontrado un producto con el numero indicado" });
+                        }
+                        }else{
+                            $.confirm({title: "error", content: "Debe ingresar un numero de cuenta destino para realizar la transferencia" });
                         }
                     }
                 })
@@ -214,7 +221,11 @@ $(function () {
     $('.realizarInsercion').on("click", function () {
         let lcModal = '#' + $(this).attr('data-modal');
         let lcTable= '#' + $(this).attr('data-table');
-        var laParams = {accion: $(this).attr('data-accion'), tabla: $(this).attr('data-tabla')};
+        var codigo = $('#codigo').val();
+        if($(this).attr('data-tabla')==='transferencias'){
+            codigo = $('#codigoT').val();
+        }
+        var laParams = {accion: $(this).attr('data-accion'), tabla: $(this).attr('data-tabla'), codigo: codigo};
         $(lcModal).find('input[name], select[name]').each(function () {
             laParams[$(this).attr('name')] = $(this).val();
         })
@@ -240,4 +251,21 @@ $(function () {
                     $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
                 });
     });
+     $('.confirmacion').on("click", function () {
+        let lcModal = '#' + $(this).attr('data-modal');
+        let lcTable= '#' + $(this).attr('data-table');
+        var laParams = {accion: $(this).attr('data-accion')};
+        $(lcModal).find('input[name], select[name]').each(function () {
+            laParams[$(this).attr('name')] = $(this).val();
+        })
+
+        $.ajax({
+            type: "GET",
+            url: "crudAjax.jsp",
+            data: laParams,
+            dataType: "json"
+        })
+                
+    });
+    
 });

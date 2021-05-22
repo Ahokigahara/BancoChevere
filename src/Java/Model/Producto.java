@@ -6,19 +6,22 @@ public class Producto {
     private Double saldo;
     private ProductoTipo productoTipo;
     private Tercero tercero;
+    private int numero;
 
     public Producto() {
         this.id = 0;
         this.saldo = 0.0;
         this.productoTipo = new ProductoTipo();
         this.tercero = new Tercero();
+        this.numero=0;
     }
 
-    public Producto(Integer id, Double saldo, ProductoTipo productoTipo, Tercero tercero) {
+    public Producto(Integer id, Double saldo, ProductoTipo productoTipo, Tercero tercero,int numero) {
         this.id = id;
         this.saldo = saldo;
         this.productoTipo = productoTipo;
         this.tercero = tercero;
+        this.numero = numero;
     }
 
     public void setId(Integer id) {
@@ -54,6 +57,14 @@ public class Producto {
 
     public Tercero getTercero() {
         return tercero;
+    }
+
+    public int getNumero() {
+        return numero;
+    }
+
+    public void setNumero(int numero) {
+        this.numero = numero;
     }
 
     

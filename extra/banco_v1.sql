@@ -195,7 +195,7 @@ INSERT INTO `usuarios` (`id`, `terceros_id`, `usuario`, `clave`, `activo`) VALUE
 --
 ALTER TABLE `movimientos`
   ADD CONSTRAINT `fk_movimientos_movimientosTipo1` FOREIGN KEY (`movimientosTipo_id`) REFERENCES `movimientostipo` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_movimientos_productos1` FOREIGN KEY (`productos_id_origen`) REFERENCES `productos` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_movimientos_productos1` FOREIGN KEY (`productos_id_origen`) REFERENCES `productos` (`numero`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_movimientos_productos2` FOREIGN KEY (`productos_id_destino`) REFERENCES `productos` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --

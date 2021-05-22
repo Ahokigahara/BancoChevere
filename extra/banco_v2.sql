@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS `movimientostipo` (
 DROP TABLE IF EXISTS `productos`;
 CREATE TABLE IF NOT EXISTS `productos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `numero` NUMERIC NOT NULL,
   `saldo` double DEFAULT NULL,
   `productoTipoId` int(11) NOT NULL,
   `terceroId` int(11) NOT NULL,
@@ -97,15 +98,16 @@ CREATE TABLE IF NOT EXISTS `productos` (
   KEY `fk_productos_productosTipo1_idx` (`productoTipoId`),
   KEY `fk_productos_terceros1_idx` (`terceroId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+ALTER TABLE banco_v2.productos ADD numero NUMERIC NOT NULL;
 
 --
 -- Volcado de datos para la tabla `productos`
 --
 
-INSERT INTO `productos` (`id`, `saldo`, `productoTipoId`, `terceroId`) VALUES
-(1, 3590000, 1, 1),
-(2, 2500000, 2, 1),
-(3, 5000000, 3, 1);
+INSERT INTO `productos` (`id`, `saldo`, `productoTipoId`, `terceroId`,`numero`) VALUES
+(1, 3590000, 1, 1,45566888),
+(2, 2500000, 2, 1,45879663),
+(3, 5000000, 3, 1,85296333);
 
 -- --------------------------------------------------------
 
@@ -232,7 +234,7 @@ INSERT INTO `usuarios` (`id`, `terceroId`, `usuario`, `clave`) VALUES
 --
 ALTER TABLE `movimientos`
   ADD CONSTRAINT `fk_movimientos_movimientosTipo1` FOREIGN KEY (`movimientoTipoId`) REFERENCES `movimientostipo` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_movimientos_productos1` FOREIGN KEY (`productoOrigenId`) REFERENCES `productos` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_movimientos_productos1` FOREIGN KEY (`productoOrigenId`) REFERENCES `productos` (`numero`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   ADD CONSTRAINT `fk_movimientos_productos2` FOREIGN KEY (`productoDestinoId`) REFERENCES `productos` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
