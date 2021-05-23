@@ -57,6 +57,7 @@ public class CrudAjax extends HttpServlet {
             Usuario usuario = getSessionUsuario(request.getSession());
             String mensaje = "";
             HttpSession httpSession = request.getSession();
+            String consultaTipo = "";
 
             switch (accion) {
                 case "insercion":
@@ -68,6 +69,7 @@ public class CrudAjax extends HttpServlet {
 
                     switch (tabla) {
                         case "transferencias":
+                            registros = "";
                             origen = getParameterString(request, "productoOrigenTransferencia");
                             String destino = getParameterString(request, "productoDestinoTransferencia");
                             valor = getParameterString(request, "valorTransferencia");
@@ -78,21 +80,15 @@ public class CrudAjax extends HttpServlet {
                             if (codigoConfirmacion.equals(codigo)) {
                                 request.getSession().removeAttribute("cod");
                                 MovimientoJDBC movimientoPagoJDBC = new MovimientoJDBC();
-                                String respuesta = movimientoPagoJDBC.insertarMovimientoTransferencia("TRANSFERENCIA", Integer.parseInt(origen), Integer.parseInt(destino), Double.parseDouble(valor), concepto);
-
-                                if (respuesta != "") {
-                                    accionCodigoConfirmacion("confirmacion", usuario, request, httpSession);
-                                    registros = "{\"RESULTADO\":true,\"MENSAJE\":\" Transferencia realizada correctamente, se ha enviado la confirmación al correo electrónico registrado\"}";
-                                } else {
-                                    registros = "{\"RESULTADO\":false,\"MENSAJE\":\"El producto seleccionado no tiene saldo suficiente para realizar la transacción\"}";
-                                }
-
+                                registros = movimientoPagoJDBC.insertarMovimientoTransferencia("TRANSFERENCIA", Integer.parseInt(origen), Integer.parseInt(destino), Double.parseDouble(valor), concepto, mensaje);
                             } else {
                                 registros = "{\"RESULTADO\":false,\"MENSAJE\":\"Codigo incorrecto. " + codigo + "<>" + codigoConfirmacion + ", por favor intente nuevamente\"}";
-                            }
+                            }                            
+                            
                             break;
 
                         case "pagos":
+                            registros = "";
                             origen = getParameterString(request, "productoOrigenPago");
                             String entidad = getParameterString(request, "entidadPago");
                             String referencia = getParameterString(request, "referenciaPago");
@@ -104,16 +100,7 @@ public class CrudAjax extends HttpServlet {
                             if (codigoConfirmacion.equals(codigo)) {
                                 request.getSession().removeAttribute("cod");
                                 MovimientoJDBC movimientoPagoJDBC = new MovimientoJDBC();
-                                String respuesta = movimientoPagoJDBC.insertarMovimientoPago("PAGO", Integer.parseInt(origen), Integer.parseInt(entidad), referencia, concepto);
-
-                                if (respuesta != "") {
-                                    accionCodigoConfirmacion("confirmacion", usuario, request, httpSession);
-                                    ProductoJDBC.instancia().actualizarSaldo(origen, respuesta);
-                                    registros = "{\"RESULTADO\":true,\"MENSAJE\":\" Pago realizado correctamente, se ha enviado la confirmación al correo electrónico registrado\"}";
-                                } else {
-                                    registros = "{\"RESULTADO\":false,\"MENSAJE\":\"El producto seleccionado no tiene saldo suficiente para realizar la transacción\"}";
-                                }
-
+                                registros = movimientoPagoJDBC.insertarMovimientoPago("PAGO", Integer.parseInt(origen), Integer.parseInt(entidad), referencia, concepto, mensaje);
                             } else {
                                 registros = "{\"RESULTADO\":false,\"MENSAJE\":\"Codigo incorrecto. " + codigo + "<>" + codigoConfirmacion + ", por favor intente nuevamente\"}";
                             }
@@ -126,31 +113,6 @@ public class CrudAjax extends HttpServlet {
 
                 case "consulta":
                     switch (tabla) {
-                        case "movimientos":
-                            registros = "";
-                            Integer productoId = getParameterInteger(request, "id");
-                            List<Movimiento> movimientos = MovimientoJDBC.instancia().consultarMovimientosProducto(usuario.getId(), productoId);
-                            for (int row = 0; row < movimientos.size(); row++) {
-                                Movimiento mov = movimientos.get(row);
-
-                                registros += (registros.length() > 0 ? "," : "") + "{\"ID\":" + Integer.toString(row+1) + ",\"FECHA\":\"" + mov.getFecha() + "\",\"ORIGEN\":" + mov.getProductoOrigenNumero() + ",\"DESTINO\":" + mov.getProductoDestinoId()
-                                        + ",\"TITULARDESTINO\":\"" + mov.getEntidadDestino() + "\",\"TIPO\":\"" + mov.getTipoMovimiento() + "\",\"VALOR\":" + mov.getMonto() + ",\"CONCEPTO\":\"" + mov.getConcepto() + "\"}";
-                            }
-                            registros = "[" + registros + "]";
-                            break;
-                            
-                        case "transferencias":
-                            registros = "";
-                            List<Movimiento> movimientosTransferencias = MovimientoJDBC.instancia().consultarMovimientos(usuario.getId(), 2);
-                            for (int row = 0; row < movimientosTransferencias.size(); row++) {
-                                Movimiento mov = movimientosTransferencias.get(row);
-
-                                registros += (registros.length() > 0 ? "," : "") + "{\"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\"" + mov.getFecha() + "\",\"ORIGEN\":" + mov.getProductoOrigenNumero() + ",\"DESTINO\":" + mov.getProductoDestinoId()
-                                        + ",\"TITULARDESTINO\":\"" + mov.getEntidadDestino() + "\",\"VALOR\":" + mov.getMonto() + ",\"CONCEPTO\":\"" + mov.getConcepto() + "\"}";
-                            }
-                            registros = "[" + registros + "]";
-                            break;
-
                         case "referencias":
                             Integer entidad = getParameterInteger(request, "entidad");
                             String referencia = getParameterString(request, "referencia");
@@ -185,12 +147,40 @@ public class CrudAjax extends HttpServlet {
 
                         case "pagos":
                             registros = "";
-                            List<Movimiento> movimientosPago = MovimientoJDBC.instancia().consultarMovimientosPago(usuario.getId(), 1);
-                            for (int row = 0; row < movimientosPago.size(); row++) {
-                                Movimiento mov = movimientosPago.get(row);
+                            List<Movimiento> movimientosPagos = MovimientoJDBC.instancia().consultarMovimientosPorTipo(usuario.getId(), 1, mensaje);
+                            consultaTipo = "Movimientos tipo: " + Integer.toString(1);
 
-                                registros += (registros.length() > 0 ? "," : "") + "{\"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\"" + mov.getFecha() + "\",\"ORIGEN\":" + mov.getProductoOrigenNumero() + ",\"ENTIDAD\":\"" + mov.getEntidadDestino()
-                                        + "\",\"REFERENCIA\":\"" + mov.getReferencia() + "\",\"VALOR\":" + mov.getMonto() + ",\"CONCEPTO\":\"" + mov.getConcepto() + "\"}";
+                            for (int row = 0; row < movimientosPagos.size(); row++) {
+                                Movimiento mov = movimientosPagos.get(row);
+                                registros += (registros.length() > 0 ? "," : "") + "{\"ID\":" + Integer.toString(mov.getId()) + ", \"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\"" + mov.getFecha() + "\",\"ORIGEN\":\"" + mov.getProductoOrigen().getIdentificardorProducto() + "\",\"DESTINO\":\"" + mov.getProductoDestino().getIdentificardorProducto() + "\",\"ENTIDAD\":\"" + mov.getProductoDestino().getTercero().getNombreCompleto() + "\"" + ",\"REFERENCIA\":\"" + Integer.toString(mov.getReferenciaPago().getId()) + "\""
+                                        + ",\"TITULARDESTINO\":\"" + mov.getProductoDestino().getTercero().getNombreCompleto() + "\",\"VALOR\":" + mov.getMonto() + ",\"CONCEPTO\":\"" + mov.getConcepto() + "\",\"TIPO\":\"" + mov.getMovimientoTipo().getNombre() + "\",\"CONSULTATIPO\":\"" + consultaTipo + "\"}";
+                            }
+                            registros = "[" + registros + "]";
+                            break;
+                            
+                        case "transferencias":
+                            registros = "";
+                            List<Movimiento> movimientosTransferencias = MovimientoJDBC.instancia().consultarMovimientosPorTipo(usuario.getId(), 2, mensaje);
+                            consultaTipo = "Movimientos tipo: " + Integer.toString(2);
+
+                            for (int row = 0; row < movimientosTransferencias.size(); row++) {
+                                Movimiento mov = movimientosTransferencias.get(row);
+                                registros += (registros.length() > 0 ? "," : "") + "{\"ID\":" + Integer.toString(mov.getId()) + ", \"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\"" + mov.getFecha() + "\",\"ORIGEN\":\"" + mov.getProductoOrigen().getIdentificardorProducto() + "\",\"DESTINO\":\"" + mov.getProductoDestino().getIdentificardorProducto() + "\",\"ENTIDAD\":\"" + mov.getProductoDestino().getTercero().getNombreCompleto() + "\"" + ",\"REFERENCIA\":\"" + Integer.toString(mov.getReferenciaPago().getId()) + "\""
+                                        + ",\"TITULARDESTINO\":\"" + mov.getProductoDestino().getTercero().getNombreCompleto() + "\",\"VALOR\":" + mov.getMonto() + ",\"CONCEPTO\":\"" + mov.getConcepto() + "\",\"TIPO\":\"" + mov.getMovimientoTipo().getNombre() + "\",\"CONSULTATIPO\":\"" + consultaTipo + "\"}";
+                            }
+                            registros = "[" + registros + "]";
+                            break;
+
+                        case "movimientos":
+                            registros = "";
+                            Integer productoId = getParameterInteger(request, "id");
+                            List<Movimiento> movimientos = MovimientoJDBC.instancia().consultarMovimientosPorProducto(productoId, mensaje);
+                            consultaTipo = "Movimientos producto: " + Integer.toString(productoId);
+
+                            for (int row = 0; row < movimientos.size(); row++) {
+                                Movimiento mov = movimientos.get(row);
+                                registros += (registros.length() > 0 ? "," : "") + "{\"ID\":" + Integer.toString(mov.getId()) + ", \"CONSECUTIVO\":" + Integer.toString(row) + ",\"FECHA\":\"" + mov.getFecha() + "\",\"ORIGEN\":\"" + mov.getProductoOrigen().getIdentificardorProducto() + "\",\"DESTINO\":\"" + mov.getProductoDestino().getIdentificardorProducto() + "\",\"ENTIDAD\":\"" + mov.getProductoDestino().getTercero().getNombreCompleto() + "\"" + ",\"REFERENCIA\":\"" + Integer.toString(mov.getReferenciaPago().getId()) + "\""
+                                        + ",\"TITULARDESTINO\":\"" + mov.getProductoDestino().getTercero().getNombreCompleto() + "\",\"VALOR\":" + mov.getMonto() + ",\"CONCEPTO\":\"" + mov.getConcepto() + "\",\"TIPO\":\"" + mov.getMovimientoTipo().getNombre() + "\",\"CONSULTATIPO\":\"" + consultaTipo + "\"}";
                             }
                             registros = "[" + registros + "]";
                             break;
@@ -209,7 +199,7 @@ public class CrudAjax extends HttpServlet {
                                         List<Producto> productos = productoJDBC.consultarProductos(usuario.getId(), mensaje);
                                         for (int row = 0; row < productos.size(); row++) {
                                             producto = productos.get(row);
-                                            registros += (registros.length() > 0 ? "," : "") + "{\"VALOR\":" + Integer.toString(producto.getNumero()) + ",\"TEXTO\":\"" + Integer.toString(producto.getNumero()) + " - " + producto.getProductoTipo().getNombre() + " - $" + producto.getSaldo() + "\"}";
+                                            registros += (registros.length() > 0 ? "," : "") + "{\"VALOR\":" + Integer.toString(producto.getNumero()) + ",\"TEXTO\":\"" + Integer.toString(producto.getNumero()) + " - " + producto.getProductoTipo().getNombre() + "\"}";
                                         }
                                     }
                                     registros = "[" + registros + "]";
@@ -302,7 +292,7 @@ public class CrudAjax extends HttpServlet {
                     break;
 
                 default:
-                    out.println("[]");
+                    out.println("[\"ERROR\":\"SIN TIPO\"]");
                     break;
             }
         }
@@ -390,9 +380,9 @@ public class CrudAjax extends HttpServlet {
     public void accionCodigoConfirmacion(String asunto, Usuario usuario, HttpServletRequest request, HttpSession httpSession) {
         String codigo = generarCodigo();
         httpSession.setAttribute("CODIGO-CONFIRMACION", codigo);
-        
+
         try {
-            enviarCorreo(asunto, usuario, codigo);
+            //enviarCorreo(asunto, usuario, codigo);
         } catch (Exception excepcion) {
             System.out.println(excepcion.getMessage());
         }
@@ -400,7 +390,7 @@ public class CrudAjax extends HttpServlet {
 
     private String generarCodigo() {
 
-        String key = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        String key = "23456789ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz";
         String pswd = "";
         for (int i = 0; i < 6; i++) {
             pswd += (key.charAt((int) (Math.random() * key.length())));

@@ -1,40 +1,38 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Model;
 
 import java.util.Date;
 
-/**
- *
- * @author Guillermo
- */
 public class Movimiento {
     private int id;
-    private int productoOrigenId;
-    private int productoOrigenNumero;
-    private int productoDestinoId;
-    private String entidadDestino;
-    private int movimientoTipoId;
-    private String tipoMovimiento;
+    private Producto productoOrigen;
+    private Producto productoDestino;
+    private MovimientoTipo movimientoTipo;
     private String fecha;
     private double monto;
-    private String referencia;
     private String concepto;
+    private ReferenciaPago referenciaPago;
+    
     public Movimiento() {
+        this.id=0;
+        this.productoOrigen = new Producto();
+        this.productoDestino = new Producto();
+        this.movimientoTipo = new MovimientoTipo();
+        this.fecha = "";
+        this.monto = 0.0;
+        this.referenciaPago = new ReferenciaPago();
+        this.concepto = "";
     }
 
     
-    public Movimiento(int id, int productoOrigenId, int productoDestinoId, int movimientoTipoId, String fecha, double monto, String referencia) {
+    public Movimiento(int id, Producto productoOrigen, Producto productoDestino, MovimientoTipo movimientoTipo, String fecha, double monto, String concepto, ReferenciaPago referenciaPago) {
         this.id = id;
-        this.productoOrigenId = productoOrigenId;
-        this.productoDestinoId = productoDestinoId;
-        this.movimientoTipoId = movimientoTipoId;
+        this.productoOrigen = productoOrigen;
+        this.productoDestino = productoDestino;
+        this.movimientoTipo = movimientoTipo;
         this.fecha = fecha;
         this.monto = monto;
-        this.referencia = referencia;
+        this.concepto = concepto;
+        this.referenciaPago = referenciaPago;
     }
 
     public int getId() {
@@ -45,28 +43,28 @@ public class Movimiento {
         this.id = id;
     }
 
-    public int getProductoOrigenId() {
-        return productoOrigenId;
+    public Producto getProductoOrigen() {
+        return productoOrigen;
     }
 
-    public void setProductoOrigenId(int productoOrigenId) {
-        this.productoOrigenId = productoOrigenId;
+    public void setProductoOrigen(Producto productoOrigen) {
+        this.productoOrigen = productoOrigen;
     }
 
-    public int getProductoDestinoId() {
-        return productoDestinoId;
+    public Producto getProductoDestino() {
+        return productoDestino;
     }
 
-    public void setProductoDestinoId(int productoDestinoId) {
-        this.productoDestinoId = productoDestinoId;
+    public void setProductoDestino(Producto productoDestino) {
+        this.productoDestino = productoDestino;
     }
 
-    public int getMovimientoTipoId() {
-        return movimientoTipoId;
+    public MovimientoTipo getMovimientoTipo() {
+        return movimientoTipo;
     }
 
-    public void setMovimientoTipoId(int movimientoTipoId) {
-        this.movimientoTipoId = movimientoTipoId;
+    public void setMovimientoTipo(MovimientoTipo movimientoTipo) {
+        this.movimientoTipo = movimientoTipo;
     }
 
     public String getFecha() {
@@ -85,28 +83,12 @@ public class Movimiento {
         this.monto = monto;
     }
 
-    public String getReferencia() {
-        return referencia;
+    public ReferenciaPago getReferenciaPago() {
+        return referenciaPago;
     }
 
-    public void setReferencia(String referencia) {
-        this.referencia = referencia;
-    }
-
-    public int getProductoOrigenNumero() {
-        return productoOrigenNumero;
-    }
-
-    public void setProductoOrigenNumero(int productoOrigenNumero) {
-        this.productoOrigenNumero = productoOrigenNumero;
-    }
-
-    public String getEntidadDestino() {
-        return entidadDestino;
-    }
-
-    public void setEntidadDestino(String entidadDestino) {
-        this.entidadDestino = entidadDestino;
+    public void setReferenciaPago(ReferenciaPago referenciaPago) {
+        this.referenciaPago = referenciaPago;
     }
 
     public String getConcepto() {
@@ -117,13 +99,9 @@ public class Movimiento {
         this.concepto = concepto;
     }
 
-    public String getTipoMovimiento() {
-        return tipoMovimiento;
-    }
-
-    public void setTipoMovimiento(String tipoMovimiento) {
-        this.tipoMovimiento = tipoMovimiento;
-    }
-    
+    @Override
+    public String toString() {
+        return "id: "+Integer.toString(this.getId())+" fecha:"+this.getFecha()+", monto:"+Double.toString(this.getMonto())+", productoOrigen: ["+this.getProductoDestino().toString()+"], productoDestino: ["+this.getProductoDestino().toString()+"], movimientoTipo: ["+this.getMovimientoTipo().toString()+"], referenciaPago:["+this.getReferenciaPago().toString()+"], concepto:"+this.getConcepto();
+    }  
     
 }

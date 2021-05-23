@@ -94,7 +94,10 @@ public class Tercero {
     public String getDocumentoExpedicion() {
         return documentoExpedicion;
     }
-
+    
+    public String getNombreCompleto(){
+        return nombres+" "+apellidos;
+    }
     public String getNombres() {
         return nombres;
     }

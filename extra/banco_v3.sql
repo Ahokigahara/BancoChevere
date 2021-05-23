@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1:3306
--- Tiempo de generación: 18-05-2021 a las 19:47:30
+-- Tiempo de generación: 23-05-2021 a las 03:42:31
 -- Versión del servidor: 5.7.31
 -- Versión de PHP: 7.3.21
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `banco_v2`
+-- Base de datos: `banco_v3`
 --
 
 -- --------------------------------------------------------
@@ -58,13 +58,24 @@ CREATE TABLE IF NOT EXISTS `movimientos` (
   `movimientoTipoId` int(11) NOT NULL,
   `fecha` datetime DEFAULT NULL,
   `monto` double DEFAULT NULL,
-  `referencia` varchar(45) DEFAULT NULL,
+  `concepto` varchar(240) DEFAULT NULL,
+  `referenciaId` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `fk_movimientos_movimientosTipo1_idx` (`movimientoTipoId`),
   KEY `fk_movimientos_productos1_idx` (`productoOrigenId`),
   KEY `fk_movimientos_productos2_idx` (`productoDestinoId`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=latin1;
+
+--
+-- Volcado de datos para la tabla `movimientos`
+--
+
+INSERT INTO `movimientos` (`id`, `productoOrigenId`, `productoDestinoId`, `movimientoTipoId`, `fecha`, `monto`, `concepto`, `referenciaId`) VALUES
+(12, 3, 3, 1, '2021-05-22 21:50:03', 1200000, 'Id:6, Monto: 1200000.0, Tercero:COLUMBUS NETWORKS DE COLOMBIA SAS C&W BUSINESS', 6),
+(13, 1, 3, 2, '2021-05-22 21:50:49', 200000, 'Prueba', 0),
+(14, 1, 2, 1, '2021-05-22 22:24:41', 150000, 'Id:1, Monto: 150000.0, Tercero:COLOMBIA TELECOMUNICACIONES S.A. ESP BIC', 1),
+(15, 1, 3, 2, '2021-05-22 22:25:37', 1, 'prueba 2', 0);
 
 -- --------------------------------------------------------
 
@@ -80,6 +91,14 @@ CREATE TABLE IF NOT EXISTS `movimientostipo` (
   UNIQUE KEY `id_UNIQUE` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+--
+-- Volcado de datos para la tabla `movimientostipo`
+--
+
+INSERT INTO `movimientostipo` (`id`, `nombre`) VALUES
+(1, 'Pago'),
+(2, 'Transferencia');
+
 -- --------------------------------------------------------
 
 --
@@ -89,6 +108,7 @@ CREATE TABLE IF NOT EXISTS `movimientostipo` (
 DROP TABLE IF EXISTS `productos`;
 CREATE TABLE IF NOT EXISTS `productos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `numero` decimal(10,0) NOT NULL,
   `saldo` double DEFAULT NULL,
   `productoTipoId` int(11) NOT NULL,
   `terceroId` int(11) NOT NULL,
@@ -102,10 +122,10 @@ CREATE TABLE IF NOT EXISTS `productos` (
 -- Volcado de datos para la tabla `productos`
 --
 
-INSERT INTO `productos` (`id`, `saldo`, `productoTipoId`, `terceroId`) VALUES
-(1, 3590000, 1, 1),
-(2, 2500000, 2, 1),
-(3, 5000000, 3, 1);
+INSERT INTO `productos` (`id`, `numero`, `saldo`, `productoTipoId`, `terceroId`) VALUES
+(1, '45566888', 649999, 1, 1),
+(2, '45879663', 2000000, 2, 1),
+(3, '85296333', 2000001, 3, 1);
 
 -- --------------------------------------------------------
 
@@ -194,7 +214,7 @@ CREATE TABLE IF NOT EXISTS `terceros` (
 --
 
 INSERT INTO `terceros` (`id`, `documento`, `documentoTipoId`, `documentoExpedicion`, `nombres`, `apellidos`, `direccion`, `telefono`, `email`) VALUES
-(1, '1001987456', 'C', '2021-05-01', 'Megan Lucia', 'Ulloa Rojas', 'calle 99 # 99 -99', '2999999', 'mail@dominio.com'),
+(1, '1001987456', 'C', '2021-05-01', 'Megan Lucia', 'Ulloa Rojas', 'calle 99 # 99 -99', '2999999', 'jortizh5@ucentral.edu.co'),
 (2, '830122566', 'N', '2000-01-01', 'COLOMBIA TELECOMUNICACIONES S.A.', 'ESP BIC', 'CALLE 99 # 99 - 99', '2999999', 'movistar@movistar.com'),
 (3, '830078515', 'N', '2000-01-01', 'COLUMBUS NETWORKS DE COLOMBIA SAS', 'C&W BUSINESS', 'CALLE 108 # 45-30', '4998877', 'columbus@columbus.com');
 
@@ -226,14 +246,6 @@ INSERT INTO `usuarios` (`id`, `terceroId`, `usuario`, `clave`) VALUES
 --
 -- Restricciones para tablas volcadas
 --
-
---
--- Filtros para la tabla `movimientos`
---
-ALTER TABLE `movimientos`
-  ADD CONSTRAINT `fk_movimientos_movimientosTipo1` FOREIGN KEY (`movimientoTipoId`) REFERENCES `movimientostipo` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_movimientos_productos1` FOREIGN KEY (`productoOrigenId`) REFERENCES `productos` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_movimientos_productos2` FOREIGN KEY (`productoDestinoId`) REFERENCES `productos` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
 -- Filtros para la tabla `productos`

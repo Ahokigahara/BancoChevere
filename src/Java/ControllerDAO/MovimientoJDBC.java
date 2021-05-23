@@ -36,9 +36,9 @@ public class MovimientoJDBC {
         return MovimientoJDBC;
     }
 
-    private final String SQL_INSERT = "INSERT INTO MOVIMIENTOS(productoOrigenId,productoDestinoId,movimientoTipoId,fecha,monto,referencia,concepto) VALUES (?,?,?,SYSDATE(),?,?,?)";
+    private final String SQL_INSERT = "INSERT INTO MOVIMIENTOS(productoOrigenId,productoDestinoId,movimientoTipoId,fecha,monto,referenciaId,concepto) VALUES (?,?,?,SYSDATE(),?,?,?)";
 
-    public String insertarMovimientoPago(String tipoMovimiento, int productoOrigenId, int productoDestinoId, String referencia, String concepto) {
+    public String insertarMovimientoPago(String tipoMovimiento, int productoOrigenId, int productoDestinoId, String referencia, String concepto, String mensaje) {
         String respuesta = "";
         Connection conn = null;
         PreparedStatement stm = null;
@@ -51,9 +51,8 @@ public class MovimientoJDBC {
             tipoMov = MOVIMIENTO_TRANSFERENCIA;
         }
         ReferenciaPago ref = ReferenciaPagoJDBC.instancia().consultarReferenciaPago(productoDestinoId, referencia, "");
-        Producto p = ProductoJDBC.instancia().consultarProducto(productoOrigenId, "");
+        Producto p = ProductoJDBC.instancia().consultarProducto(productoOrigenId, mensaje);
         if (p.getSaldo() >= ref.getMonto()) {
-
             try {
                 conn = Conexion.getConnection();
                 stm = conn.prepareStatement(SQL_INSERT);
@@ -61,23 +60,28 @@ public class MovimientoJDBC {
                 stm.setInt(2, productoDestinoId);
                 stm.setInt(3, tipoMov);
                 stm.setDouble(4, ref.getMonto());
-                stm.setString(5, referencia);
-                stm.setString(6, concepto);
+                stm.setInt(5, ref.getId());
+                stm.setString(6, "Id:"+Integer.toString(ref.getId())+", Monto: "+Double.toString(ref.getMonto())+", Tercero:"+ref.getTercero().getNombreCompleto());
                 stm.executeUpdate();
-                respuesta = "Exitoso," + (p.getSaldo() - ref.getMonto());
+                ProductoJDBC.instancia().actualizarSaldo(p.getId(), p.getSaldo()-ref.getMonto()); 
+                respuesta = "{\"RESULTADO\":true,\"MENSAJE\":\" Pago realizado correctamente, nuevo saldo: "+Double.toString(p.getSaldo()-ref.getMonto())+"\"}";
+                
             } catch (SQLException e) {
-                System.out.println(e.getMessage());
+                mensaje = e.getMessage();
+                respuesta = "{\"RESULTADO\":false,\"MENSAJE\":\" Pago no realizado correctamente, "+e.getMessage()+"\"}";
             } finally {
                 Conexion.closed(conn);
                 Conexion.closed(stm);
                 Conexion.closed(rs);
             }
+        }else{
+            respuesta = "{\"RESULTADO\":false,\"MENSAJE\":\"Sin saldo\"}";
         }
 
         return respuesta;
     }
 
-    public String insertarMovimientoTransferencia(String tipoMovimiento, int productoOrigenId, int productoDestinoId, double valor, String concepto) {
+    public String insertarMovimientoTransferencia(String tipoMovimiento, int productoOrigenId, int productoDestinoId, double valor, String concepto, String mensaje) {
         String SQL_INSERT = "INSERT INTO MOVIMIENTOS(productoOrigenId,productoDestinoId,movimientoTipoId,fecha,monto,concepto) VALUES (?,?,?,SYSDATE(),?,?)";
         String respuesta = "";
         Connection conn = null;
@@ -103,10 +107,9 @@ public class MovimientoJDBC {
                 stm.setDouble(4, valor);
                 stm.setString(5, concepto);
                 stm.executeUpdate();
-                operacionesTransferencia(origen, destino, valor);
-                respuesta = "Exitoso";
+                respuesta = operacionesTransferencia(origen, destino, valor, mensaje);
             } catch (SQLException e) {
-                System.out.println(e.getMessage());
+                respuesta = "{\"RESULTADO\":false,\"MENSAJE\":\" Transferecnia no realizadoa correctamente, "+e.getMessage()+"\"}";
             } finally {
                 Conexion.closed(conn);
                 Conexion.closed(stm);
@@ -117,131 +120,38 @@ public class MovimientoJDBC {
         return respuesta;
     }
 
-    public List<Movimiento> consultarMovimientosProducto(int usuarioId, int productoId) {
-        String sql = "SELECT m.fecha,p.numero as origen, m.monto,m.concepto,m.productoDestinoId FROM movimientos m INNER JOIN productos p ON m.productoOrigenId = p.id and p.terceroId=? inner join terceros t on p.terceroId=t.id \n"
-                + " where m.productoOrigenId =? or m.productoDestinoId =? ";
+    private final String SQL_SELECT_LIST_MOV_PRO = "SELECT M.id, M.productoOrigenId, M.productoDestinoId, M.movimientoTipoId, M.fecha, M.monto, M.concepto, M.referenciaId FROM movimientos m INNER JOIN productos P ON M.productoOrigenId = P.id INNER JOIN terceros T on P.terceroId=T.id WHERE M.productoOrigenId =? or M.productoDestinoId =?";
+
+    public List<Movimiento> consultarMovimientosPorProducto(int productoId, String mensaje) {
         Connection conn = null;
         PreparedStatement stm = null;
         ResultSet rs = null;
+
+        ProductoJDBC productoJDBC = new ProductoJDBC();
+        MovimientoTipoJDBC movimientoTipoJDBC = new MovimientoTipoJDBC();
+        ReferenciaPagoJDBC referenciaPagoJDBC = new ReferenciaPagoJDBC();
 
         List<Movimiento> movimientos = new ArrayList();
 
         try {
             conn = Conexion.getConnection();
-            stm = conn.prepareStatement(sql);
-            stm.setInt(1, usuarioId);
+            stm = conn.prepareStatement(SQL_SELECT_LIST_MOV_PRO);
+            stm.setInt(1, productoId);
             stm.setInt(2, productoId);
-            stm.setInt(3, productoId);
             rs = stm.executeQuery();
             SimpleDateFormat formateador = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
             while (rs.next()) {
+                Producto productoOrigen = productoJDBC.consultarProducto(rs.getInt(2));
+                Producto productoDestino = productoJDBC.consultarProducto(rs.getInt(3));
+                MovimientoTipo movimientoTipo = movimientoTipoJDBC.consultarMovimientoTipo(rs.getInt(4), mensaje);
 
-                Movimiento mov = new Movimiento();
-                mov.setFecha(formateador.format(rs.getDate(1)));
-                mov.setProductoOrigenNumero(rs.getInt(2));
-                mov.setMonto(rs.getDouble(3));
-                mov.setConcepto(rs.getString(4));
-
-                String subCons = "select t.nombres, t.apellidos,p.numero from terceros t join productos p on t.id = p.terceroId where t.id =?";
-                PreparedStatement stm2 = conn.prepareStatement(subCons);
-                stm2.setInt(1, rs.getInt("productoDestinoId"));
-                ResultSet rs2 = stm2.executeQuery();
-                if (rs2.next()) {
-                    mov.setEntidadDestino(rs2.getString(1) + " " + rs2.getString(2));
-                    mov.setProductoDestinoId(rs.getInt(3));
+                ReferenciaPago referenciaPago = new ReferenciaPago();
+                if (movimientoTipo.getId() == 1) {
+                    referenciaPago = referenciaPagoJDBC.consultarReferenciaPagoId(rs.getInt(8), mensaje);
                 }
+
+                Movimiento mov = new Movimiento(rs.getInt(1), productoOrigen, productoDestino, movimientoTipo, rs.getString(5), rs.getDouble(6), rs.getString(7), referenciaPago);
                 movimientos.add(mov);
-
-            }
-        } catch (SQLException e) {
-            System.out.println("Error: " + e.getMessage());
-        } finally {
-            Conexion.closed(conn);
-            Conexion.closed(stm);
-            Conexion.closed(rs);
-        }
-        return movimientos;
-    }  
-    
-    public List<Movimiento> consultarMovimientos(int usuarioId, int tipoMovimiento) {
-        String sql = "SELECT m.fecha,p.numero as origen, m.monto,m.concepto,m.productoDestinoId FROM movimientos m INNER JOIN productos p ON m.productoOrigenId = p.id and p.terceroId=? inner join terceros t on p.terceroId=t.id \n"
-                + " where m.movimientoTipoId =?  ";
-        Connection conn = null;
-        PreparedStatement stm = null;
-        ResultSet rs = null;
-
-        List<Movimiento> movimientos = new ArrayList();
-
-        try {
-            conn = Conexion.getConnection();
-            stm = conn.prepareStatement(sql);
-            stm.setInt(1, usuarioId);
-            stm.setInt(2, tipoMovimiento);
-            rs = stm.executeQuery();
-            SimpleDateFormat formateador = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
-            while (rs.next()) {
-
-                Movimiento mov = new Movimiento();
-                mov.setFecha(formateador.format(rs.getDate(1)));
-                mov.setProductoOrigenNumero(rs.getInt(2));
-                mov.setMonto(rs.getDouble(3));
-                mov.setConcepto(rs.getString(4));
-
-                String subCons = "select t.nombres, t.apellidos,p.numero from terceros t join productos p on t.id = p.terceroId where t.id =?";
-                PreparedStatement stm2 = conn.prepareStatement(subCons);
-                stm2.setInt(1, rs.getInt("productoDestinoId"));
-                ResultSet rs2 = stm2.executeQuery();
-                if (rs2.next()) {
-                    mov.setEntidadDestino(rs2.getString(1) + " " + rs2.getString(2));
-                    mov.setProductoDestinoId(rs.getInt(3));
-                }
-                movimientos.add(mov);
-
-            }
-        } catch (SQLException e) {
-            System.out.println("Error: " + e.getMessage());
-        } finally {
-            Conexion.closed(conn);
-            Conexion.closed(stm);
-            Conexion.closed(rs);
-        }
-        return movimientos;
-    }
-    private final String SQL_SELECT_LIST_MOV = "SELECT m.fecha,p.numero as origen, m.referencia,m.monto,m.concepto,m.productoDestinoId FROM movimientos m INNER JOIN productos p ON m.productoOrigenId = p.id and p.terceroId=? inner join terceros t on p.terceroId=t.id "
-            + "where m.movimientoTipoId =? ";
-
-    public List<Movimiento> consultarMovimientosPago(int usuarioId, int tipoMovimiento) {
-        Connection conn = null;
-        PreparedStatement stm = null;
-        ResultSet rs = null;
-
-        List<Movimiento> movimientos = new ArrayList();
-
-        try {
-            conn = Conexion.getConnection();
-            stm = conn.prepareStatement(SQL_SELECT_LIST_MOV);
-            stm.setInt(1, usuarioId);
-            stm.setInt(2, tipoMovimiento);
-            rs = stm.executeQuery();
-            SimpleDateFormat formateador = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
-            while (rs.next()) {
-
-                Movimiento mov = new Movimiento();
-                mov.setFecha(formateador.format(rs.getDate(1)));
-                mov.setProductoOrigenNumero(rs.getInt(2));
-                mov.setReferencia(rs.getString(3));
-                mov.setMonto(rs.getDouble(4));
-                mov.setConcepto(rs.getString(5));
-
-                String subCons = "select t.nombres, t.apellidos from terceros t where t.id =?";
-                PreparedStatement stm2 = conn.prepareStatement(subCons);
-                stm2.setInt(1, rs.getInt("productoDestinoId"));
-                ResultSet rs2 = stm2.executeQuery();
-                if (rs2.next()) {
-                    mov.setEntidadDestino(rs2.getString(1) + " " + rs2.getString(2));
-                }
-                movimientos.add(mov);
-
             }
         } catch (SQLException e) {
             System.out.println("Error: " + e.getMessage());
@@ -253,7 +163,51 @@ public class MovimientoJDBC {
         return movimientos;
     }
 
-    public void operacionesTransferencia(Producto origen, Producto destino, double montoTransferido) {
+    private final String SQL_SELECT_LIST_TIPO = "SELECT M.id, M.productoOrigenId, M.productoDestinoId, M.movimientoTipoId, M.fecha, M.monto, M.concepto, M.referenciaId FROM movimientos M INNER JOIN productos P ON M.productoOrigenId = P.id INNER JOIN terceros T ON P.terceroId=T.id WHERE P.terceroId=? AND M.movimientoTipoId = ? ";
+
+    public List<Movimiento> consultarMovimientosPorTipo(int usuarioId, int tipoMovimiento, String mensaje) {
+        Connection conn = null;
+        PreparedStatement stm = null;
+        ResultSet rs = null;
+
+        ProductoJDBC productoJDBC = new ProductoJDBC();
+        MovimientoTipoJDBC movimientoTipoJDBC = new MovimientoTipoJDBC();
+        ReferenciaPagoJDBC referenciaPagoJDBC = new ReferenciaPagoJDBC();
+
+        List<Movimiento> movimientos = new ArrayList();
+
+        try {
+            conn = Conexion.getConnection();
+            stm = conn.prepareStatement(SQL_SELECT_LIST_TIPO);
+            stm.setInt(1, usuarioId);
+            stm.setInt(2, tipoMovimiento);
+            rs = stm.executeQuery();
+            SimpleDateFormat formateador = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+            while (rs.next()) {
+                Producto productoOrigen = productoJDBC.consultarProducto(rs.getInt(2));
+                Producto productoDestino = productoJDBC.consultarProducto(rs.getInt(3));
+                MovimientoTipo movimientoTipo = movimientoTipoJDBC.consultarMovimientoTipo(rs.getInt(4), mensaje);
+
+                ReferenciaPago referenciaPago = new ReferenciaPago();
+                if (movimientoTipo.getId() == 1) {
+                    referenciaPago = referenciaPagoJDBC.consultarReferenciaPagoId(rs.getInt(8), mensaje);
+                }
+
+                Movimiento mov = new Movimiento(rs.getInt(1), productoOrigen, productoDestino, movimientoTipo, rs.getString(5), rs.getDouble(6), rs.getString(7), referenciaPago);
+                movimientos.add(mov);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error: " + e.getMessage());
+        } finally {
+            Conexion.closed(conn);
+            Conexion.closed(stm);
+            Conexion.closed(rs);
+        }
+        return movimientos;
+    }
+
+    public String operacionesTransferencia(Producto origen, Producto destino, double montoTransferido, String mensaje) {
+        String respuesta = "";
         String sql = "UPDATE productos SET saldo=? where numero=?";
         Connection conn = null;
         PreparedStatement stm = null;
@@ -273,13 +227,17 @@ public class MovimientoJDBC {
             stm.setDouble(1, nuevoSaldoDestino);
             stm.setInt(2, destino.getNumero());
             stm.executeUpdate();
+            
+            respuesta = "{\"RESULTADO\":true,\"MENSAJE\":\" Transferencia realizada correctamente.\"}";
 
         } catch (SQLException e) {
-            System.out.println("Error: " + e.getMessage());
+            respuesta = "{\"RESULTADO\":false,\"MENSAJE\":\" Transferecnia no realizadoa correctamente, "+e.getMessage()+"\"}";
         } finally {
             Conexion.closed(conn);
             Conexion.closed(stm);
             Conexion.closed(rs);
         }
+        
+        return respuesta;
     }
 }

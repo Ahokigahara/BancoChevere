@@ -13,3 +13,7 @@
 .text-bmu{
     color: rgb(213,157,58)!important;
 }
+
+.alert-confirm-code {
+    z-index: 9999; position: absolute; right: 20px; bottom: 10px;
+}

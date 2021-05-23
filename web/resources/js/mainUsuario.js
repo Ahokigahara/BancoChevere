@@ -119,7 +119,8 @@ $(function () {
                 {field: 'ENTIDAD', title: 'Entidad', class: 'text-nowrap'},
                 {field: 'REFERENCIA', title: 'Referencia', class: 'text-nowrap'},
                 {field: 'VALOR', title: 'Valor', class: 'text-nowrap text-right font-weight-bolder', formatter: currencyFormatter},
-                {field: 'CONCEPTO', title: 'Concepto', class: 'text-nowrap'}
+                {field: 'CONCEPTO', title: 'Concepto', class: 'text-nowrap'},
+                {field: 'TIPO', title: 'Tipo', class: 'text-nowrap'}
             ]
         ]
     });
@@ -135,7 +136,8 @@ $(function () {
                 {field: 'DESTINO', title: 'Cuenta Destino', class: 'text-nowrap'},
                 {field: 'TITULARDESTINO', title: 'Titular Producto Destino', class: 'text-nowrap'},
                 {field: 'VALOR', title: 'Valor', class: 'text-nowrap text-right font-weight-bolder', formatter: currencyFormatter},
-                {field: 'CONCEPTO', title: 'Concepto', class: 'text-nowrap'}
+                {field: 'CONCEPTO', title: 'Concepto', class: 'text-nowrap'},
+                {field: 'TIPO', title: 'Tipo', class: 'text-nowrap'}
             ]
         ]
     });
@@ -208,25 +210,23 @@ $(function () {
             url: "crudAjax.jsp",
             data: {accion: 'consulta', tabla: 'productos', alcance: "destino", productoDestino: loProductoDestino.val()},
             dataType: "json"
-        })
-                .done(function (response) {
-                    if (response != undefined) {
-                        if (response.RESULTADO != undefined) {
-                            if (response.RESULTADO == true) {
-                                $('#productoDestinoTitularTransferencia').val(response.TITULAR);
-                                $('#valorTransferencia').removeAttr("disabled");
-                                $('#conceptoTransferencia').removeAttr("disabled");
-                            } else {
-                                $.confirm({title: "error", content: "No se ha encontrado un producto con el numero indicado"});
-                            }
-                        } else {
-                            $.confirm({title: "error", content: "Debe ingresar un numero de cuenta destino para realizar la transferencia"});
-                        }
+        }).done(function (response) {
+            if (response != undefined) {
+                if (response.RESULTADO != undefined) {
+                    if (response.RESULTADO == true) {
+                        $('#productoDestinoTitularTransferencia').val(response.TITULAR);
+                        $('#valorTransferencia').removeAttr("disabled");
+                        $('#conceptoTransferencia').removeAttr("disabled");
+                    } else {
+                        $.confirm({title: "error", content: "No se ha encontrado un producto con el numero indicado"});
                     }
-                })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
-                });
+                } else {
+                    $.confirm({title: "error", content: "Debe ingresar un numero de cuenta destino para realizar la transferencia"});
+                }
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
+        });
     });
 
     $('#tableProductos').on('click-row.bs.table', function (row, $element, field) {
@@ -235,11 +235,10 @@ $(function () {
         let loModalMovimientos = $('#verMovimientos');
 
         loTable.bootstrapTable('refreshOptions', {url: lcTableUrl});
-       // loTable.bootstrapTable('refresh', {url: lcTableUrl});
 
         $.each($element, function (key, value) {
-            value = (key=='SALDO'?currencyFormatter(value):value);
-            $('#movimiento-'+key).val(value);
+            value = (key == 'SALDO' ? currencyFormatter(value) : value);
+            $('#movimiento-' + key).val(value);
         });
 
         loModalMovimientos.modal('show');
@@ -273,21 +272,21 @@ $(function () {
             url: "crudAjax.jsp",
             data: laParams,
             dataType: "json"
-        })
-                .done(function (response) {
-                    if (response != undefined) {
-                        if (response.RESULTADO != undefined) {
-                            $.confirm({title: "Resultado", content: response.MENSAJE});
-                            if (response.RESULTADO == true) {
-                                $(lcModal).modal('hide');
-                                $(lcTable).bootstrapTable('refresh');
-                            }
-                        }
+        }).done(function (response) {
+            if (response != undefined) {
+                if (response.RESULTADO != undefined) {
+                    $.confirm({title: "Resultado", content: response.MENSAJE});
+                    if (response.RESULTADO == true) {
+                        $(lcModal).modal('hide');
+                        $(lcTable).bootstrapTable('refresh');
                     }
-                })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
-                });
+                }
+            }
+            $('#tableProductos').bootstrapTable('refresh');
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
+        });
+
     });
     $('.confirmacion').on("click", function () {
         let lcModal = '#' + $(this).attr('data-modal');
@@ -302,6 +301,8 @@ $(function () {
             url: "crudAjax.jsp",
             data: laParams,
             dataType: "json"
+        }).done(function (response) {
+            $('#confirmCodigo').append($("<div></div>").attr('id', 'confirmCodigoAlert').addClass("alert alert-warning alert-dismissible alert-confirm-code fade show").html('<strong>Codio de confirmación:</strong> ' + response.CODIGO + '. Aplicación con fines educativos.<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'));
         })
 
     });

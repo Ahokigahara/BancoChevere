@@ -122,17 +122,16 @@ public class ProductoJDBC {
         }
         return productos;
     }       
-    private final String SQL_UPDATE_ONE = "UPDATE productos SET saldo=? where numero=?";
-    public void actualizarSaldo(String origen, String respuesta) {
-        String[] saldo=respuesta.split(",");
+    private final String SQL_UPDATE_ONE = "UPDATE productos SET saldo=? where id=?";
+    public void actualizarSaldo(Integer productoId, Double saldoNuevo) {
         Connection conn=null;
         PreparedStatement stm=null;
         ResultSet rs=null;
         try{
             conn = Conexion.getConnection() ;
             stm = conn.prepareStatement(SQL_UPDATE_ONE);
-            stm.setDouble(1, Double.parseDouble(saldo[1]));
-            stm.setInt(2, Integer.parseInt(origen));
+            stm.setDouble(1, saldoNuevo);
+            stm.setInt(2, productoId);
             stm.executeUpdate();
             
         }catch(SQLException e){

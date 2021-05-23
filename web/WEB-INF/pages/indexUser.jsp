@@ -355,7 +355,7 @@
                                                     </div>
                                                     <div class="modal-footer">
 
-                                                        <button type="button" class="btn btn-warning realizarInsercion" id="btnConfirmarCodigo" data-dismiss="modal" data-accion="insercion" data-tabla="transferencias" data-modal="realizarTransferencia" data-table="tableTransferencias")>Enviar</button>
+                                                        <button type="button" class="btn btn-warning realizarInsercion" id="btnConfirmarCodigo" data-dismiss="modal" data-accion="insercion" data-tabla="transferencias" data-modal="realizarTransferencia" data-table="tableTransferencias">Enviar</button>
                                                     </div>
                                                 </div>
                                             </div>

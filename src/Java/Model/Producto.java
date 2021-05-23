@@ -62,6 +62,10 @@ public class Producto {
     public int getNumero() {
         return numero;
     }
+    
+    public String getIdentificardorProducto(){
+        return Integer.toString(this.getId())+"-"+Integer.toString(this.getNumero());
+    }
 
     public void setNumero(int numero) {
         this.numero = numero;

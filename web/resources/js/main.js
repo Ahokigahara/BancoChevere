@@ -26,8 +26,10 @@ $(function () {
             data: {accion: 'confirmacion'},
             dataType: "json"
         }).done(function (response) {
-            console.log(response);
             $('#codigoConfirmacionSesion').modal('show');
+            $('#confirmCodigoAlert').alert('close');
+            $('#confirmCodigo').append($("<div></div>").attr('id','confirmCodigoAlert').addClass("alert alert-warning alert-dismissible alert-confirm-code fade show").html('<strong>Codio de confirmación:</strong> ' + response.CODIGO + '. Aplicación con fines educativos.<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'));
+
         }).fail(function (jqXHR, textStatus, errorThrown) {
             $.confirm({title: "error", content: "Se presentó un error al validar el usuario. \n" + jqXHR.responseText});
         });
