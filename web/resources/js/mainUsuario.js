@@ -145,6 +145,7 @@ $(function () {
         locale: 'es-ES',
         classes: 'table table-bordered table-hover table-sm table-responsive-sm table-striped',
         theadClasses: 'thead-light',
+        exportTypes: ['csv', 'txt', 'excel'],
         columns: [
             [
                 {field: 'ID', title: 'id', class: 'text-nowrap'},
@@ -160,6 +161,7 @@ $(function () {
         locale: 'es-ES',
         classes: 'table table-bordered table-hover table-sm table-responsive-sm table-striped',
         theadClasses: 'thead-light',
+        exportTypes: ['csv', 'txt', 'excel'],
         columns: [
             [
                 {field: 'ID', title: 'id', class: 'text-nowrap'},
@@ -174,7 +176,12 @@ $(function () {
 
     $('.producto').producto();
     $('#entidadPago').entidad();
+
     $('#entidadPago').on("change", function () {
+        $('#valorPago').val('');
+        $('#conceptoPago').val('');
+        $('#referenciaPago').val('');
+
         if ($(this).val() > 0) {
             $('#referenciaPago').removeAttr("disabled");
         } else {
@@ -183,25 +190,26 @@ $(function () {
     });
 
     $('.mostrarValorPago').on("change", function () {
+        $('#valorPago').val('');
+        $('#conceptoPago').val('');
 
         $.ajax({
             type: "GET",
             url: "crudAjax.jsp",
             data: {accion: 'consulta', tabla: 'referencias', entidad: $('#entidadPago').val(), referencia: $('#referenciaPago').val()},
             dataType: "json"
-        })
-                .done(function (response) {
-                    if (response != undefined) {
-                        if (response.VALOR != undefined) {
-                            $('#valorPago').val(formatCurrency(response.VALOR));
-                            $('#conceptoPago').val(response.CONCEPTO);
-                        }
-                    }
-                })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    $.confirm({title: "error", content: "Se presentó un error al cargar el producto \n" + jqXHR.responseText});
-                });
+        }).done(function (response) {
+            if (response != undefined) {
+                if (response.VALOR != undefined) {
+                    $('#valorPago').val(response.VALOR > 0 ? formatCurrency(response.VALOR) : '');
+                    $('#conceptoPago').val(response.CONCEPTO);
+                }
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            $.confirm({title: "error", content: "Se presentó un error al cargar el producto \n" + jqXHR.responseText});
+        });
     });
+
     $('#productoDestinoTransferencia').on("change", function () {
         let loProductoDestino = $(this);
 
@@ -265,7 +273,7 @@ $(function () {
         var laParams = {accion: $(this).attr('data-accion'), tabla: $(this).attr('data-tabla'), codigo: codigo};
         $(lcModal).find('input[name], select[name]').each(function () {
             laParams[$(this).attr('name')] = $(this).val();
-        })
+        });
 
         $.ajax({
             type: "GET",
@@ -284,27 +292,160 @@ $(function () {
             }
             $('#tableProductos').bootstrapTable('refresh');
         }).fail(function (jqXHR, textStatus, errorThrown) {
-            $.confirm({title: "error", content: "Se presentó un error al cargar el producto destino \n" + jqXHR.responseText});
+            $.confirm({title: "error", content: "Se presentó un error al insertar el registro \n" + jqXHR.responseText});
         });
 
     });
     $('.confirmacion').on("click", function () {
-        let lcModal = '#' + $(this).attr('data-modal');
-        let lcTable = '#' + $(this).attr('data-table');
+        let llValido = false;
+        let loModal = null;
+
         var laParams = {accion: $(this).attr('data-accion')};
-        $(lcModal).find('input[name], select[name]').each(function () {
-            laParams[$(this).attr('name')] = $(this).val();
-        })
 
-        $.ajax({
-            type: "GET",
-            url: "crudAjax.jsp",
-            data: laParams,
-            dataType: "json"
-        }).done(function (response) {
-            $('#confirmCodigo').append($("<div></div>").attr('id', 'confirmCodigoAlert').addClass("alert alert-warning alert-dismissible alert-confirm-code fade show").html('<strong>Codio de confirmación:</strong> ' + response.CODIGO + '. Aplicación con fines educativos.<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'));
-        })
+        switch ($(this).prop('id')) {
+            case 'btnConfirmarRealizarPago':
+                loModal = $('#codigoConfirmacion');
+                llValido = $("#formRealizarPago").valid();
+                break;
 
+            case 'btnConfirmarRealizarTransaccion':
+                loModal = $('#codigoConfirmacionTransferencia');
+                llValido = $("#formRealizarTransferencia").valid();
+                break;
+        }
+
+        if (llValido == true) {
+            loModal.modal('show');
+            $.ajax({
+                type: "GET",
+                url: "crudAjax.jsp",
+                data: laParams,
+                dataType: "json"
+            }).done(function (response) {
+                $('#confirmCodigo').append($("<div></div>").attr('id', 'confirmCodigoAlert').addClass("alert alert-warning alert-dismissible alert-confirm-code fade show").html('<strong>Codio de confirmación:</strong> ' + response.CODIGO + '. Aplicación con fines educativos.<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'));
+            });
+        }
+    });
+
+
+    $("#formRealizarTransferencia").validate({
+        rules: {
+            productoOrigenTransferencia: "required",
+            productoDestinoTitularTransferencia: "required",
+            conceptoTransferencia: "required",
+            productoDestinoTransferencia: {
+                required: true,
+                minlength: 1,
+                number: true
+            },
+            valorTransferencia: {
+                required: true,
+                minlength: 1,
+                number: true
+            },
+
+        },
+        messages: {
+            productoOrigenTransferencia: "* Indique el producto de origen",
+            productoDestinoTitularTransferencia: "* Indique el prodycto de destino, Titular destino no valido",
+            conceptoTransferencia: "* Indique el concepto",
+            productoDestinoTransferencia: {
+                required: "* Indique el numero de producto de destino",
+                minlength: "Minimo un digito",
+                number: "Tipo de dato no valido",
+            },
+            valorTransferencia: {
+                required: "* Indique el valor",
+                minlength: "Minimo un digito",
+                number: "Tipo de dato no valido",
+            },
+        },
+        invalidHandler: function () {
+            $.dialog({title: "No valido", content: "Existen campos no validos"});
+        },
+        errorElement: "small",
+        errorClass: 'text-danger',
+        validClass: 'text-success',
+    });
+
+    $("#formRealizarPago").validate({
+        rules: {
+            productoOrigenPago: "required",
+            entidadPago: "required",
+            referenciaPago: "required",
+            valorPago: "required",
+            conceptoPago: "required"
+        },
+        messages: {
+            productoOrigenPago: "* Indique el producto de origen",
+            entidadPago: "* Indique la entidad",
+            referenciaPago: "* Indique la referencia",
+            valorPago: "* Indique la referencia, valor no valido",
+            conceptoPago: "* Indique la referencia, valor no valido"
+        },
+        invalidHandler: function () {
+            $.dialog({title: "No valido", content: "Existen campos no validos"});
+        },
+        errorElement: "small",
+        errorClass: 'text-danger',
+        validClass: 'text-success',
+    });
+
+    $('#btnGuardarMovimientos').click(function () {
+        var doc = new jsPDF();
+
+        header = {
+            "ID": "movimiento-ID",
+            "Producto Numero": "movimiento-NUMERO",
+            "Tipo": "movimiento-TIPO",
+            "Saldo": "movimiento-SALDO",
+        };
+
+        let x = 20;
+        let y = 5;
+        doc.setFont('helvetica')
+        doc.setFontType('bold')
+        doc.setFontSize(22);
+        
+        y += 10;
+        doc.text(x, y, "BMU");
+        
+        y += 10;
+        doc.text(x, y, $('#nombreCompletoCliente').text());
+        
+        y += 20;
+        $.each(header, function (key, value) {
+            y += 10;
+            doc.text(x, y, key + ": " + $('#' + value).val());
+        });
+
+        
+        y += 20;
+        let colSizes = {1:0, 2:5, 3:27, 4:49, 5:73, 6:120};
+
+        $('#tableMovimientosProducto thead tr').each((row, tr) => {
+            y += 5;
+            doc.setFont('courier')
+            doc.setFontType('bold')
+            doc.setFontSize(8)
+            
+            $(tr).children('th').each((col, th) => {
+                doc.text(x+colSizes[col+1], y, $(th).text());
+            });
+        });        
+        
+        $('#tableMovimientosProducto tbody tr').each((row, tr) => {
+            y += 5;
+            doc.setFont('courier')
+            doc.setFontType('normal')
+            doc.setFontSize(8)
+            
+            $(tr).children('td').each((col, td) => {
+                doc.text(x+colSizes[col+1], y, $(td).text());
+            });
+        });
+
+        doc.save('movimientos.pdf');
     });
 
 });

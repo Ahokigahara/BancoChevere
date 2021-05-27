@@ -17,9 +17,17 @@
 <script src="<%= request.getContextPath()%>/resources/js/main.js"></script>
 <!-- Bootstrap Table -->
 <link rel="stylesheet" href="<%= request.getContextPath()%>/resources/addons/bootstrap-table/3.1.3-dist/bootstrap-table.min.css" />
+<script type="text/javascript" src="<%= request.getContextPath()%>/resources/addons/jquery-tableexport/tableExport.min.js"></script>
 <script type="text/javascript" src="<%= request.getContextPath()%>/resources/addons/bootstrap-table/3.1.3-dist/bootstrap-table.min.js"></script>
 <script type="text/javascript" src="<%= request.getContextPath()%>/resources/addons/bootstrap-table/3.1.3-dist/bootstrap-table-locale-all.min.js"></script>
 <script type="text/javascript" src="<%= request.getContextPath()%>/resources/addons/bootstrap-table/3.1.3-dist/extensions/export/bootstrap-table-export.min.js"></script>
 <!-- Bootstrap Confirm -->
 <link rel="stylesheet" href="<%= request.getContextPath()%>/resources/addons/jquery-confirm/3.3.4-dist/jquery-confirm.min.css" />
 <script type="text/javascript" src="<%= request.getContextPath()%>/resources/addons/jquery-confirm/3.3.4-dist/jquery-confirm.min.js"></script>
+<!-- jQuery validation -->
+<script src="<%= request.getContextPath()%>/resources/addons/jquery-validation/1.19.3-dist/jquery.validate.js"></script>
+<script src="<%= request.getContextPath()%>/resources/addons/jquery-validation/1.19.3-dist/localization/messages_es.js"></script>
+<!-- jspdf -->
+<script src="<%= request.getContextPath()%>/resources/addons/jspdf/0.9.0r-dist/jspdf.min.js"></script>
+<!-- html2canvas -->
+<script src="<%= request.getContextPath()%>/resources/addons/html2canvas/1.0.0-dist/html2canvas.min.js"></script>

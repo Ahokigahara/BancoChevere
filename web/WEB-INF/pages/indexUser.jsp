@@ -29,7 +29,7 @@
                                 <small class="text-muted"><%= usuario.getDocumentoTipo().getNombre() + " - " + usuario.getDocumento()%></small>
                             </div>
                             <div class="col-6 text-right">
-                                <%= usuario.getNombres() + " " + usuario.getApellidos()%> <br/> <small class="text-muted"><%= usuario.getEmail()%></small>
+                                <span id="nombreCompletoCliente"><%= usuario.getNombres() + " " + usuario.getApellidos()%></span> <br/> <small class="text-muted"><%= usuario.getEmail()%></small>
                             </div>                                
                         </div>				
                     </div>
@@ -58,11 +58,10 @@
                                                             </div>
                                                             <table
                                                                 id="tableProductos"
-                                                                data-show-export="false"
                                                                 data-toolbar="#toolbarProductos"
                                                                 data-show-refresh="true"
                                                                 data-click-to-select="true"
-                                                                data-show-export="false"
+                                                                data-show-export="true"
                                                                 data-show-columns="true"
                                                                 data-show-columns-toggle-all="true"
                                                                 data-minimum-count-columns="5"
@@ -83,7 +82,7 @@
                                                                         <span aria-hidden="true">&times;</span>
                                                                     </button>
                                                                 </div>
-                                                                <div class="modal-body">
+                                                                <div class="modal-body" id="verMovimientosBody">
                                                                     <div class="form-row">
                                                                         <div class="col-6">
                                                                             <div class="form-group">
@@ -110,6 +109,7 @@
                                                                         <div class="col-12">
                                                                             <table
                                                                                 id="tableMovimientosProducto"
+                                                                                data-show-export="true"
                                                                                 data-show-refresh="true"
                                                                                 data-id-field="ID"
                                                                                 data-row-style="rowStyle"
@@ -119,6 +119,7 @@
                                                                     </div>
                                                                 </div>
                                                                 <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" id="btnGuardarMovimientos">Guardar PDF</button>
                                                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                                                                 </div>
                                                             </div>
@@ -137,11 +138,10 @@
                                                             </div>
                                                             <table
                                                                 id="tableTransferencias"
-                                                                data-show-export="false"
                                                                 data-toolbar="#toolbarTransferencias"
                                                                 data-show-refresh="true"
                                                                 data-click-to-select="true"
-                                                                data-show-export="false"
+                                                                data-show-export="true"
                                                                 data-show-columns="true"
                                                                 data-show-columns-toggle-all="true"
                                                                 data-minimum-count-columns="5"
@@ -164,7 +164,7 @@
                                                                 </button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <form>
+                                                                <form id="formRealizarTransferencia">
                                                                     <div class="form-row">
                                                                         <div class="form-group col-12">
                                                                             <label for="productoOrigenTransferencia" class="required">Producto Origen</label>
@@ -183,14 +183,14 @@
                                                                     <div class="form-row">
                                                                         <div class="form-group col-12">
                                                                             <label for="productoDestinoTitularTransferencia" class="required">Titular del producto destino</label>
-                                                                            <input type="text" class="form-control" id="productoDestinoTitularTransferencia" name="productoDestinoTitularTransferencia" disabled="disabled">
+                                                                            <input type="text" class="form-control" id="productoDestinoTitularTransferencia" name="productoDestinoTitularTransferencia" readonly="readonly">
                                                                             <small id="productoDestinoTitularTransferenciaAyuda" class="form-text text-muted">Aqui aparece el titular de la cuenta del producto destino</small>
                                                                         </div>
                                                                     </div>
                                                                     <div class="form-row">
                                                                         <div class="form-group col-12">
                                                                             <label for="valorTransferencia" class="required">Valor del transferencia</label>
-                                                                            <input type="number" class="form-control" id="valorTransferencia" name="valorTransferencia"  required="required" disabled="disabled">
+                                                                            <input type="number" class="form-control" id="valorTransferencia" name="valorTransferencia" required="required" disabled="disabled">
                                                                             <small id="valorTransferenciaAyuda" class="form-text text-muted">Valor de transferencia a realizar</small>
                                                                         </div>
                                                                     </div>  
@@ -205,7 +205,7 @@
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                                                                <button id="btnConfirmarRealizarTransaccion" type="button" class="btn btn-warning confirmacion" data-toggle="modal" data-target="#codigoConfirmacionTransferencia" data-accion="confirmacion" accesskey="R">Realizar Transaccion</button>
+                                                                <button id="btnConfirmarRealizarTransaccion" type="button" class="btn btn-warning confirmacion" data-accion="confirmacion" accesskey="R">Realizar Transaccion</button>
                                                                 <!--<button type="button" class="btn btn-warning realizarInsercion" data-accion="insercion" data-tabla="transferencias" data-modal="realizarTransferencia" data-table="tableTransferencias">Realizar Transferencia</button>-->
                                                             </div>
                                                         </div>
@@ -223,11 +223,10 @@
                                                             </div>
                                                             <table
                                                                 id="tablePagos"
-                                                                data-show-export="false"
+                                                                data-show-export="true"
                                                                 data-toolbar="#toolbarPagos"
                                                                 data-show-refresh="true"
                                                                 data-click-to-select="true"
-                                                                data-show-export="false"
                                                                 data-show-columns="true"
                                                                 data-show-columns-toggle-all="true"
                                                                 data-minimum-count-columns="5"
@@ -249,7 +248,7 @@
                                                                     </button>
                                                                 </div>
                                                                 <div class="modal-body">
-                                                                    <form>
+                                                                    <form id="formRealizarPago">
                                                                         <div class="form-row">
                                                                             <div class="form-group col-12">
                                                                                 <label for="productoOrigenPago" class="required">Producto Origen</label>
@@ -268,20 +267,20 @@
                                                                             <div class="form-group col-12">
                                                                                 <label for="referenciaPago" class="required">Referencia de pago</label>
                                                                                 <input type="text" class="form-control mostrarValorPago" id="referenciaPago" name="referenciaPago" required="required" disabled="disabled">
-                                                                                <small id="referenciaPagoAyuda" class="form-text text-muted">Ingrese la referncia de pago</small>
+                                                                                <small id="referenciaPagoAyuda" class="form-text text-muted">Ingrese la referencia de pago</small>
                                                                             </div>
                                                                         </div>        
                                                                         <div class="form-row">
                                                                             <div class="form-group col-12">
                                                                                 <label for="valorPago" class="required">Valor del pago</label>
-                                                                                <input type="text" class="form-control" id="valorPago"  required="required" readonly="readonly">
+                                                                                <input type="text" class="form-control" id="valorPago" name="valorPago" required="required" readonly="readonly">
                                                                                 <small id="valorPagoAyuda" class="form-text text-muted">Valor de pago a realizar</small>
                                                                             </div>
                                                                         </div>  
                                                                         <div class="form-row">
                                                                             <div class="form-group col-12">
                                                                                 <label for="conceptoPago" class="required">Concepto</label>
-                                                                                <input type="text" class="form-control" id="conceptoPago"  required="required" disabled="disabled">
+                                                                                <input type="text" class="form-control" id="conceptoPago" name="conceptoPago" required="required" readonly="readonly">
                                                                                 <small id="conceptoPagoAyuda" class="form-text text-muted">Concepto de la referencia</small>
                                                                             </div>
                                                                         </div>                                                                              
@@ -289,7 +288,7 @@
                                                                 </div>
                                                                 <div class="modal-footer">
                                                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                                                                    <button id="btnConfirmarRealizarPago" type="button" class="btn btn-warning confirmacion" data-toggle="modal" data-target="#codigoConfirmacion" data-accion="confirmacion" accesskey="R">Realizar pago</button>
+                                                                    <button id="btnConfirmarRealizarPago" type="button" class="btn btn-warning confirmacion" data-accion="confirmacion" accesskey="R">Realizar pago</button>
                                                                     <!--<button type="button" class="btn btn-warning realizarInsercion" id="btnConfirmarRealizarPago" data-accion="insercion" data-tabla="pagos" data-modal="realizarPago" data-table="tablePagos")>Realizar Pago</button>-->
                                                                 </div>
                                                             </div>
@@ -301,7 +300,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Confirmation code Modal-->
+                                        <!-- Confirmation code Modal Pago-->
                                         <div class="modal fade" id="codigoConfirmacion" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                                             <div class="modal-dialog modal-dialog-centered">
                                                 <div class="modal-content">
